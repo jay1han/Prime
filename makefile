@@ -15,3 +15,6 @@ primep.dbg: primep.c
 
 primep.opt: primep.c
 	gcc -O primep.c -o primep.opt
+
+prime4: prime4.c
+	gcc -O prime4.c -o prime4
