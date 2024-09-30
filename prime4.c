@@ -142,7 +142,7 @@ int main (int argc, char **argv) {
     if (step * step > upto) step = 1000;
     if (upto % step) upto = (upto / step) * step;
 
-    printf("Up to %d in steps of %d on %d cores\n", upto, step, cores);
+    printf("Up to %d in steps of %d on %d threads\n", upto, step, cores);
 
     table = (number_t*) malloc(upto * sizeof(number_t));
     memset(table, 0, upto * sizeof(number_t));
@@ -190,7 +190,7 @@ int main (int argc, char **argv) {
     fclose(file);
     printf("\n");
     
-    printf("Found %d primes up to %d in steps of %d on %d cores using %s RAM written %s bytes to \"%s\"\n",
+    printf("Found %d primes up to %d in steps of %d on %d threads using %s RAM written %s bytes to \"%s\"\n",
            count, upto, step, cores, pretty(total, total_s), pretty(size, size_s), filename);
 
     return 0;
