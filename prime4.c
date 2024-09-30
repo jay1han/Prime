@@ -27,6 +27,7 @@ int init;
 int count = 0;
 int cores = 8;
 char primes[] = "primes";
+int quiet = 0;
 
 int decomp(int original) {
     int divisor;
@@ -34,7 +35,7 @@ int decomp(int original) {
     int exponent;
     int remainder;
 
-    if ((original % (upto / 1000)) == 0) printf("%d\n", original);
+    if (!quiet && (original % (upto / 1000)) == 0) printf("%d\n", original);
     
     remainder = original;
 
@@ -128,11 +129,14 @@ int main (int argc, char **argv) {
     long int size = 0;
     char *filename = primes;
     char total_s[20], size_s[20];
+    int do_write = 1;
 
     for (i = 1; i < argc; i++) {
         if (argv[i][0] == '-') filename = &argv[i][1];
         else if (argv[i][0] == 'c') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%d", &step);
+        else if (argv[i][0] == 't') do_write = 0;
+        else if (argv[i][0] == 'q') quiet = 1;
         else sscanf(argv[i], "%d", &upto);
     }
     if (cores > 16) cores = 16;
@@ -175,20 +179,22 @@ int main (int argc, char **argv) {
         count += counts[i];
     }
 
-    printf("Writing to \"%s\"\n", filename);
-    FILE *file = fopen("primes", "wb");
-    for (i = 2; i < upto; i++) {
-        fwrite(&i, 4, 1, file);
-        fwrite(&table[i].divisors, 4, 1, file);
-        fwrite(table[i].factors, sizeof(factor_t), table[i].divisors, file);
-        size += 8 + table[i].divisors * sizeof(factor_t);
-        if ((i % step) == 0) {
-            printf("%d\n", i);
-            fflush(file);
+    if (do_write) {
+        printf("Writing to \"%s\"\n", filename);
+        FILE *file = fopen("primes", "wb");
+        for (i = 2; i < upto; i++) {
+            fwrite(&i, 4, 1, file);
+            fwrite(&table[i].divisors, 4, 1, file);
+            fwrite(table[i].factors, sizeof(factor_t), table[i].divisors, file);
+            size += 8 + table[i].divisors * sizeof(factor_t);
+            if ((i % step) == 0) {
+                if (!quiet) printf("%d\n", i);
+                fflush(file);
+            }
         }
+        fclose(file);
+        printf("\n");
     }
-    fclose(file);
-    printf("\n");
     
     printf("Found %d primes up to %d in steps of %d on %d threads using %s RAM written %s bytes to \"%s\"\n",
            count, upto, step, cores, pretty(total, total_s), pretty(size, size_s), filename);
