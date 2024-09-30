@@ -143,7 +143,6 @@ int main (int argc, char **argv) {
     if (upto > 1e9) upto = 1e9;
     if (upto < 2000) upto = 20000;
     if (step < 1000) step = 1000;
-    if (step * step > upto) step = 1000;
     if (upto % step) upto = (upto / step) * step;
 
     printf("Up to %d in steps of %d on %d threads\n", upto, step, cores);
