@@ -1,8 +1,10 @@
-// First version: naive
+// Second version: threads and semaphores
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <semaphore.h>
+#include <pthread.h>
 
 typedef struct factor_s {
     int factor;
@@ -11,12 +13,13 @@ typedef struct factor_s {
 factor_t *factors;
 
 typedef struct number_s {
+    sem_t semaphore;
     int divisors;
     factor_t *factors;
 } number_t;
 number_t *table;
 
-int bound = 100;
+int bound = 2000;
 
 void decomp(int original) {
     int divisor;
@@ -68,6 +71,17 @@ void decomp(int original) {
     memcpy(table[original].factors, factors, divisors * sizeof(factor_t));
 }
 
+void *start(void *arg) {
+    int i, j;
+    
+    for (i = 1000; i < bound; i += 100) {
+        if (sem_trywait(&table[i].semaphore) == 0) {
+            for (j = i; j < i + 100; j++) decomp(j);
+        }
+        else i += 800;
+    }
+}
+
 void print(int number) {
     int i;
     
@@ -82,6 +96,8 @@ void print(int number) {
     }
 }
 
+pthread_t threads[8];
+
 int main (int argc, char **argv) {
     number_t *p, *n;
     int i;
@@ -90,11 +106,25 @@ int main (int argc, char **argv) {
 
     table = (number_t*) malloc(bound * sizeof(number_t));
     memset(table, 0, bound * sizeof(number_t));
+    for (i = 0; i < bound; i++) {
+        sem_init(&table[i].semaphore, 0, 1);
+    }
+    
     factors = (factor_t*) malloc(bound * sizeof(factor_t));
 
-    for (i = 3; i < bound; i ++) decomp(i);
+    for (i = 4; i < 1000; i++) {
+        decomp(i);
+    }
+
+    for (i = 0; i < 8; i++) {
+        pthread_create(&threads[i], NULL, start, NULL);
+    }
+    
+    for (i = 0; i < 8; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
 //    for (i = 2; i < bound; i++) print(i);
     
     return 0;
 }
-

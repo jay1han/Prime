@@ -1,8 +1,10 @@
-// First version: naive
+// Third version: with self-divisors
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <semaphore.h>
+#include <pthread.h>
 
 typedef struct factor_s {
     int factor;
@@ -16,7 +18,13 @@ typedef struct number_s {
 } number_t;
 number_t *table;
 
-int bound = 100;
+sem_t *semaphores;
+
+#define STEP  1000
+#define CORES 8
+
+int bound = STEP * 2;
+int init;
 
 void decomp(int original) {
     int divisor;
@@ -40,8 +48,8 @@ void decomp(int original) {
         divisors++;
     }
         
-    for (divisor = 3; divisor < remainder; divisor += 2) {
-        if ((table[divisor].divisors == 0) && ((remainder % divisor) == 0)) {
+    for (divisor = 3; divisor * divisor < remainder; divisor += 2) {
+        if ((table[divisor].factors == NULL) && ((remainder % divisor) == 0)) {
             exponent = 0;
             do {
                 exponent++;
@@ -68,6 +76,17 @@ void decomp(int original) {
     memcpy(table[original].factors, factors, divisors * sizeof(factor_t));
 }
 
+void *start(void *arg) {
+    int i, j;
+    
+    for (i = init; i < bound; i += STEP) {
+        if (sem_trywait(&semaphores[i / STEP]) == 0) {
+            for (j = i; j < (i + STEP) && j < bound; j++) decomp(j);
+        }
+        else i += STEP;
+    }
+}
+
 void print(int number) {
     int i;
     
@@ -82,19 +101,50 @@ void print(int number) {
     }
 }
 
-int main (int argc, char **argv) {
-    number_t *p, *n;
-    int i;
+pthread_t threads[CORES];
 
-    if (argc > 1) sscanf(argv[1], "%d", &bound);
+int main (int argc, char **argv) {
+    int i;
+    int s;
+    int do_print = 0;
+
+    for (i = 1; i < argc; i++) {
+        if (argv[i][0] == 'p') do_print = 1;
+        else sscanf(argv[i], "%d", &bound);
+    }
+
+    if (bound % STEP) {
+        printf("Only steps of %d\n", STEP);
+        exit(0);
+    }
 
     table = (number_t*) malloc(bound * sizeof(number_t));
     memset(table, 0, bound * sizeof(number_t));
+    s = bound / STEP;
+    semaphores = (sem_t*) malloc(s * sizeof(sem_t));
+    memset(semaphores, 0, s * sizeof(sem_t));
+    
+    for (i = 0; i < s; i++) {
+        sem_init(&semaphores[i], 0, 1);
+    }
+    
     factors = (factor_t*) malloc(bound * sizeof(factor_t));
 
-    for (i = 3; i < bound; i ++) decomp(i);
-//    for (i = 2; i < bound; i++) print(i);
+    for (init = 4; init * init < bound; init++) {
+        decomp(init);
+    }
+
+    for (i = 0; i < CORES; i++) {
+        pthread_create(&threads[i], NULL, start, NULL);
+    }
+    
+    for (i = 0; i < CORES; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    if (do_print) {
+        for (i = 2; i < bound; i++) print(i);
+    }
     
     return 0;
 }
-
