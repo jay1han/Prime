@@ -57,13 +57,15 @@ void decomp(int original) {
         printf("Prime\n");
         return;
     }
-    printf("\n");
     
     if (remainder > 1) {
         factors[divisors].factor = remainder;
         factors[divisors].exponent = 1;
+        printf("%d^1", remainder);
         divisors++;
     }
+    
+    printf("\n");
 
     table[original].divisors = divisors;
     table[original].factors = (factor_t*) malloc(divisors * sizeof(factor_t));
