@@ -136,7 +136,7 @@ int main (int argc, char **argv) {
         else sscanf(argv[i], "%d", &upto);
     }
     if (cores > 16) cores = 16;
-    if (upto > 100000000) upto = 100000000;
+    if (upto > 1e9) upto = 1e9;
     if (upto < 2000) upto = 20000;
     if (step < 1000) step = 1000;
     if (step * step > upto) step = 1000;
