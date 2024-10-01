@@ -1,100 +1,47 @@
-// First version: naive
-
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include "prime.h"
 
-typedef struct factor_s {
-    int factor;
-    int exponent;
-} factor_t;
-factor_t *factors;
+// Object-like structure to retrieve contiguous list of primes
 
-typedef struct number_s {
-    int divisors;
-    factor_t *factors;
-} number_t;
-number_t *table;
+unsigned int begin[100000], length[100000];
+unsigned int *list[100000];
 
-int bound = 100;
+typedef struct prime_s {
+    unsigned int number;
+    int part, offset;
+} prime_t;
 
-void decomp(int original) {
-    int divisor;
-    int divisors = 0;
-    int exponent;
-    int remainder;
+static int parts = 0;
 
-    if ((original % (bound / 1000)) == 0) printf("%d\n", original);
-    
-    remainder = original;
-
-    // Cheat for 2
-    exponent = 0;
-    while ((remainder & 1) == 0) {
-        exponent++;
-        remainder >>= 1;
-    }
-    if (exponent > 0) {
-        factors[divisors].factor = 2;
-        factors[divisors].exponent = exponent;
-        divisors++;
-    }
-        
-    for (divisor = 3; divisor < remainder; divisor += 2) {
-        if ((table[divisor].divisors == 0) && ((remainder % divisor) == 0)) {
-            exponent = 0;
-            do {
-                exponent++;
-                remainder /= divisor;
-            } while ((remainder % divisor) == 0);
-            factors[divisors].factor = divisor;
-            factors[divisors].exponent = exponent;
-            divisors++;
-        }
-    }
-    
-    if (remainder == original) {
-        return;
-    }
-    
-    if (remainder > 1) {
-        factors[divisors].factor = remainder;
-        factors[divisors].exponent = 1;
-        divisors++;
-    }
-    
-    table[original].divisors = divisors;
-    table[original].factors = (factor_t*) malloc(divisors * sizeof(factor_t));
-    memcpy(table[original].factors, factors, divisors * sizeof(factor_t));
+// Add a list of "count" primes to our total list
+void prime_add(unsigned int *primes, int count) {
+    begin[parts] = primes[0];
+    length[parts] = count;
+    list[parts] = primes;
+    parts++;
 }
 
-void print(int number) {
-    int i;
-    
-    printf("%8d = ", number);
+// Create a new object to iterate the list
+void *prime_new() {
+    prime_t *p = (prime_t*)malloc(sizeof(prime_t));
+    p->number = 1;
+    p->part = -1;
+    p->offset = -1;
+    return (void*)p;
+}
 
-    if (table[number].divisors == 0) 
-        printf("Prime\n");
-    else {
-        for (i = 0; i < table[number].divisors; i++) 
-            printf("%d^%d ", table[number].factors[i].factor, table[number].factors[i].exponent);
-        printf("\n");
+// Get the next prime or 0 if none
+unsigned int prime_next(void *arg) {
+    prime_t *p = (prime_t*)arg;
+    if (++(p->offset) >= length[p->part]) {
+        if (++(p->part) >= parts) return 0;
+        else p->offset = 0;
     }
+    p->number = list[p->part][p->offset];
+    return p->number;
 }
 
-int main (int argc, char **argv) {
-    number_t *p, *n;
-    int i;
-
-    if (argc > 1) sscanf(argv[1], "%d", &bound);
-
-    table = (number_t*) malloc(bound * sizeof(number_t));
-    memset(table, 0, bound * sizeof(number_t));
-    factors = (factor_t*) malloc(bound * sizeof(factor_t));
-
-    for (i = 3; i < bound; i ++) decomp(i);
-//    for (i = 2; i < bound; i++) print(i);
-    
-    return 0;
+// Destroy the objet
+void prime_end(void *p) {
+    free(p);
 }
-
