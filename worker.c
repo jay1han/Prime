@@ -3,7 +3,17 @@
 #include "worker.h"
 #include "decomp.h"
 
-void *work(void *arg) {
+typedef struct worker_s {
+    // inputs
+    unsigned int begin;
+    unsigned int end;
+    // outputs
+    unsigned int count;
+    unsigned int *primes;   // must be packed
+    number_t *numbers;
+} worker_t;
+
+static void *work(void *arg) {
     worker_t *worker_p = (worker_t*)arg;
     unsigned int number;
     unsigned int *primes;
@@ -24,3 +34,8 @@ void *work(void *arg) {
     return arg;
 }
 
+void *worker_start(unsigned int begin, unsigned int span) {
+}
+
+void worker_join(void *worker) {
+}

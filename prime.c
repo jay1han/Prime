@@ -2,9 +2,10 @@
 #include "prime.h"
 
 // Object-like structure to retrieve contiguous list of primes
+// The list is the data, and callers use an iterator to go through the list
 
-unsigned int begin[100000], length[100000];
-unsigned int *list[100000];
+static unsigned int begin[100000], length[100000];
+static unsigned int *list[100000];
 
 typedef struct prime_s {
     unsigned int number;
@@ -14,6 +15,7 @@ typedef struct prime_s {
 static int parts = 0;
 
 // Add a list of "count" primes to our total list
+// The given list is assumed to be contiguous and increasing
 void prime_add(unsigned int *primes, int count) {
     begin[parts] = primes[0];
     length[parts] = count;

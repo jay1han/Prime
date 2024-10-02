@@ -4,13 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "prime.h"
-#include "prime5.h"
-#include "decomp.h"
 #include "worker.h"
-
-number_t *numbers;
-unsigned int *primes;
 
 unsigned int upto = 2000;
 int count = 0;
@@ -57,6 +51,7 @@ int main (int argc, char **argv) {
 
     workers[0].begin = 2;
     workers[0].end = 100000;
+    work(&workers[0]);
     
     for (init = 4; init < step; init++) {
         if (decomp(init)) count++;
