@@ -5,17 +5,17 @@
 #include <string.h>
 #include <pthread.h>
 #include "worker.h"
+#include "prime.h"
+#include "number.h"
+#include "decomp.h"
 
-unsigned int upto = 2000;
-int count = 0;
+unsigned int upto = 100000;
+unsigned int span = 100000;
 char primes_file[40] = "primes";
 char numbers_file[40] = "numbers";
 
-pthread_t threads[16];
-worker_t workers[16];
-
 int cores = 8;
-int quiet = 0;
+unsigned int show = 10000;
 int do_write = 1;
 
 char *pretty(long int size, char *text) {
@@ -26,69 +26,87 @@ char *pretty(long int size, char *text) {
     return text;
 }
 
-void parse(int argc, char **argv) {
+int parse(int argc, char **argv) {
     for (int i = 0; i < argc; i++) {
         if (argv[i][0] == '-') strcpy(primes_file, &argv[i][1]);
         else if (argv[i][0] == '+') strcpy(numbers_file, &argv[i][1]);
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 'n') do_write = 0;
-        else if (argv[i][0] == 'q') quiet = 1;
+        else if (argv[i][0] == 'q') show = 0;
+        else if (argv[i][0] == 's') sscanf(&argv[i][1], "%d", &show);
         else sscanf(argv[i], "%u", &upto);
     }
     
     if (cores > 16) cores = 16;
     if (upto >= 1e9) upto = 1e9 - 1;
     if (upto < 100000) upto = 100000;
+    if (span > upto) span = upto / (cores + 1);
+    upto = (1 + upto / span) * span;
+
+    if (argc == 0) {
+        printf("Options\n");
+        printf("\t-<name>\tprimes_file\n");
+        printf("\t+<name>\tnumbers_file\n");
+        printf("\tt#\tthreads\n");
+        printf("\tn\tno output\n");
+        printf("\tq\tquiet\n");
+        printf("\ts#\tshow tick every #\n");
+        printf("\t#\tup to\n");
+        printf("\ts#\tspan of computation\n");
+    }
+    
+    printf("Up to %u in %u spans on %d threads ", upto, span, cores);
+    if (show == 0) printf("quiet\n");
+    else printf("show %u's\n", show);
+
+    return argc;
 }
 
 int main (int argc, char **argv) {
     long int memory = 0, filesize = 0;
     char memory_s[20], filesize_s[20];
+    void *workers[16];
+    unsigned int current;
 
-    parse(argc - 1, argv + 1);
+    if(parse(argc - 1, argv + 1) == 0) return 0;
+
+    primes_init(span * cores);
+    primes_add(2);
+    numbers_init(2, span - 2);
     
-    printf("Up to %u on %d threads\n", upto, cores);
-
-    workers[0].begin = 2;
-    workers[0].end = 100000;
-    work(&workers[0]);
+    for (current = 2; current < span; current++)
+        decomp(current);
+    if (do_write) numbers_output(numbers_file);
+    numbers_close();
+    primes_defrag();
     
-    for (init = 4; init < step; init++) {
-        if (decomp(init)) count++;
-    }
-
-    memset(counts, 0, 16 * sizeof(int));
-    for (i = 0; i < cores; i++) {
-        pthread_create(&threads[i], NULL, start, &counts[i]);
-    }
-    
-    for (i = 0; i < cores; i++) {
-        pthread_join(threads[i], NULL);
-    }
-
-    for (i = 0; i < cores; i++) {
-        count += counts[i];
-    }
-
-    if (do_write) {
-        printf("Writing to \"%s\"\n", filename);
-        FILE *file = fopen("primes", "wb");
-        for (i = 2; i < upto; i++) {
-            fwrite(&i, 4, 1, file);
-            fwrite(&table[i].divisors, 4, 1, file);
-            fwrite(table[i].factors, sizeof(factor_t), table[i].divisors, file);
-            filesize += 8 + table[i].divisors * sizeof(factor_t);
-            if ((i % step) == 0) {
-                if (!quiet) printf("%d\n", i);
-                fflush(file);
-            }
+    while (current < upto) {
+        unsigned int begin = current;
+        unsigned int sofar = primes_count();
+        
+        numbers_init(current, current + span * cores);
+        
+        for (int thread = 0; thread < cores; thread++) {
+            workers[thread] = worker_start(current, span, show);
+            current += span;
         }
-        fclose(file);
-        printf("\n");
-    }
     
-    printf("Found %d primes up to %d in steps of %d on %d threads using %s RAM written %s bytes to \"%s\"\n",
-           count, upto, step, cores, pretty(memory, memory_s), pretty(filesize, filesize_s), filename);
+        for (int thread = 0; thread < cores; thread++)
+            worker_join(workers[thread]);
 
+        primes_defrag();
+        
+        if (do_write) {
+            unsigned int latest = primes_count();
+            printf("Span %u..%u : %u primes, total %u\n",
+                   begin, current - 1, latest - sofar, latest);
+            numbers_output(numbers_file);
+        }
+        numbers_close();
+    }
+
+    printf("Total %u primes\n", primes_count());
+    primes_output(primes_file);
+    
     return 0;
 }

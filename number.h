@@ -3,11 +3,25 @@
 #ifndef _NUMBER_H_
 #define _NUMBER_H_
 
-// Inialize the numbers list (or re-initialize)
+// Inialize the numbers list
 void numbers_init(
     unsigned int begin,  // the first number in this list
     unsigned int span    // the number of numbers in this list
     );
+
+// After all numbers in this iteration have been computed,
+// Store the current list in binary form to file {fd}
+void numbers_output(
+    char *filename
+    );
+
+// Print the current list in text form to file {fd}
+void numbers_print(
+    char *filename
+    );
+
+// Close the numbers list
+void numbers_close();
 
 // Allocate a number object
 void *number_new(
@@ -28,19 +42,8 @@ void number_addfactor(
     );
 
 // Add the number in the list
-void number_return(
+void number_done(
     void *number
-    );
-
-// After all numbers in this iteration have been computed,
-// Store the current list in binary form to file {fd}
-void numbers_output(
-    int fd
-    );
-
-// Print the current list in text form to file {fd}
-void numbers_print(
-    int fd
     );
 
 #endif

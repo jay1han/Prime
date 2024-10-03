@@ -1,41 +1,42 @@
 #include <stdlib.h>
-#include "prime5.h"
+#include <pthread.h>
+#include <stdio.h>
 #include "worker.h"
 #include "decomp.h"
 
 typedef struct worker_s {
-    // inputs
     unsigned int begin;
-    unsigned int end;
-    // outputs
-    unsigned int count;
-    unsigned int *primes;   // must be packed
-    number_t *numbers;
+    unsigned int span;
+    unsigned int show;
+    pthread_t thread;
 } worker_t;
 
 static void *work(void *arg) {
-    worker_t *worker_p = (worker_t*)arg;
-    unsigned int number;
-    unsigned int *primes;
-    number_t *numbers;
-
-    worker_p->count = 0;
-    numbers = calloc((worker_p->end - worker_p->begin), sizeof(number_t));
-    primes = calloc((worker_p->end - worker_p->begin), sizeof(unsigned int));
+    worker_t *worker = (worker_t*)arg;
+    unsigned int number = worker->begin;
     
-    for (unsigned int step = 0; step < (worker_p->end - worker_p->begin); step++) {
-        if (decomp(worker_p->begin + step, &numbers[step]))
-            primes[worker_p->count++] = worker_p->begin + step;
+    for (unsigned int step = 0; step < worker->span; step++) {
+        if ((number % worker->span) == 0) printf("%u\n", number);
+        decomp(number);
+        number++;
     }
-
-    worker_p->numbers = numbers;
-    worker_p->primes = primes;
-    
     return arg;
 }
 
-void *worker_start(unsigned int begin, unsigned int span) {
+void *worker_start(unsigned int begin, unsigned int span, unsigned int show) {
+    worker_t *worker;
+
+    worker = malloc(sizeof(worker_t));
+    worker->begin = begin;
+    worker->span  = span;
+    worker->show  = show;
+
+    pthread_create(&worker->thread, NULL, work, worker);
+    return (void*)worker;
 }
 
-void worker_join(void *worker) {
+void worker_join(void *arg) {
+    worker_t *worker = (worker_t*)arg;
+    pthread_join(worker->thread, NULL);
+    free(worker);
 }

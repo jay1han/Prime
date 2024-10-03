@@ -1,46 +1,30 @@
 #include "prime.h"
 #include "prime5.h"
+#include "number.h"
 
 // Store decomposition in *number_p and return 1 only if prime
-int decomp(unsigned int original, number_t *number_p) {
-    int divisors = 0;
-    factor_t factors[20];
+void decomp(unsigned int original) {
     unsigned int remainder = original;
-
+    void *number = number_new(original);
     void *prime = prime_new();
-    unsigned int divisor = prime_next(prime);
-    while (divisor * divisor <= remainder) {
-        if ((remainder % divisor) == 0) {
+    unsigned int factor = prime_next(prime);
+    
+    while (factor * factor <= remainder) {
+        if ((remainder % factor) == 0) {
             int exponent = 0;
             do {
                 exponent++;
-                remainder /= divisor;
-            } while ((remainder % divisor) == 0);
-            factors[divisors].factor = divisor;
-            factors[divisors].exponent = exponent;
-            divisors++;
+                remainder /= factor;
+            } while ((remainder % factor) == 0);
+            number_addfactor(number, factor, exponent);
         }
-        divisor = prime_next(prime);
-        if (divisor == 0) break;
+        factor = prime_next(prime);
+        if (factor == 0) break;
     }
     prime_end(prime);
     
-    if (remainder == original) {
-        number_p->divisors = 0;
-        number_p->factors = NULL;
-        return 1;
-    }
+    if (remainder == original) number_isprime(number);
+    else if (remainder > 1)    number_addfactor(number, remainder, 1);
     
-    if (remainder > 1) {
-        factors[divisors].factor = remainder;
-        factors[divisors].exponent = 1;
-        divisors++;
-    }
-    
-    number_p->divisors = divisors;
-    number_p->factors = (factor_t*) malloc(divisors * sizeof(factor_t));
-    memcpy(number_p->factors, factors, divisors * sizeof(factor_t));
-
-    memory += divisors * sizeof(factor_t);
-    return 0;
+    number_done(number);
 }

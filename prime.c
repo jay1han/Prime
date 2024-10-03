@@ -4,46 +4,34 @@
 // Object-like structure to retrieve contiguous list of primes
 // The list is the data, and callers use an iterator to go through the list
 
-static unsigned int begin[100000], length[100000];
-static unsigned int *list[100000];
-
 typedef struct prime_s {
     unsigned int number;
     int part, offset;
 } prime_t;
 
 static int parts = 0;
+unsigned int **primes;
 
-// Add a list of "count" primes to our total list
-// The given list is assumed to be contiguous and increasing
-void prime_add(unsigned int *primes, int count) {
-    begin[parts] = primes[0];
-    length[parts] = count;
-    list[parts] = primes;
-    parts++;
+void primes_init(unsigned int span) {
 }
 
-// Create a new object to iterate the list
+void primes_add(unsigned int prime) {
+}
+
+void primes_defrag() {
+}
+
+unsigned int primes_count() {
+}
+
+void primes_output(char *filename) {
+}
+
 void *prime_new() {
-    prime_t *p = (prime_t*)malloc(sizeof(prime_t));
-    p->number = 1;
-    p->part = -1;
-    p->offset = -1;
-    return (void*)p;
 }
 
-// Get the next prime or 0 if none
-unsigned int prime_next(void *arg) {
-    prime_t *p = (prime_t*)arg;
-    if (++(p->offset) >= length[p->part]) {
-        if (++(p->part) >= parts) return 0;
-        else p->offset = 0;
-    }
-    p->number = list[p->part][p->offset];
-    return p->number;
+unsigned int prime_next(void *iterator) {
 }
 
-// Destroy the objet
-void prime_end(void *p) {
-    free(p);
+void prime_end(void *iterator) {
 }

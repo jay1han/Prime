@@ -4,12 +4,13 @@
 // Start a worker on a span of numbers
 void *worker_start(
     unsigned int begin,
-    unsigned int span
-    );                   // returns a worker object
+    unsigned int span,
+    unsigned int show
+    );                      // returns a worker object
 
 // Wait for a worker to finish
 void worker_join(
-    void *
+    void *arg
     );
 
 #endif

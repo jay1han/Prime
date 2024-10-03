@@ -5,12 +5,23 @@
 
 // Allocate a structure to build a new sequence
 void primes_init(
-    unsigned int step,   // size of thread of computation
+    unsigned int span    // size of thread of computation
     );
 
 // Add a number to the sequence
 void primes_add(
     unsigned int prime   // prime number to add
+    );
+
+// Defragments the list
+void primes_defrag();
+
+// Returns the number of primes so far
+unsigned int primes_count();
+
+// Write to file
+void primes_output(
+    char *filename
     );
 
 // Allocate an iterator
