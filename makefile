@@ -1,4 +1,4 @@
-CC := gcc -c -O -MMD -MF
+CC := gcc -c -ggdb -MMD -MF
 LD := gcc
 ALLOBJECTS := prime.o decomp.o worker.o prime5.o number.o
 

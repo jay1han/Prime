@@ -5,8 +5,8 @@
 
 // Inialize the numbers list
 void numbers_init(
-    unsigned int begin,  // the first number in this list
-    unsigned int span    // the number of numbers in this list
+    unsigned int first,  // the first number in this list
+    unsigned int last    // the last number in this list
     );
 
 // After all numbers in this iteration have been computed,
@@ -41,7 +41,7 @@ void number_addfactor(
     int exponent
     );
 
-// Add the number in the list
+// Save the number
 void number_done(
     void *number
     );

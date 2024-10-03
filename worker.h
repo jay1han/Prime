@@ -4,7 +4,7 @@
 // Start a worker on a span of numbers
 void *worker_start(
     unsigned int begin,
-    unsigned int span,
+    unsigned int last,
     unsigned int show
     );                      // returns a worker object
 

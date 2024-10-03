@@ -3,18 +3,13 @@
 #ifndef _PRIME_H_
 #define _PRIME_H_
 
-// Allocate a structure to build a new sequence
-void primes_init(
-    unsigned int span    // size of thread of computation
-    );
+// Allocate
+void primes_init();
 
 // Add a number to the sequence
 void primes_add(
     unsigned int prime   // prime number to add
     );
-
-// Defragments the list
-void primes_defrag();
 
 // Returns the number of primes so far
 unsigned int primes_count();
