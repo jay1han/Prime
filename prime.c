@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include "prime.h"
+#include "pack.h"
 
 // Object-like structure to retrieve contiguous list of primes
 // The list is the data, and callers use an iterator to go through the list
@@ -18,11 +19,6 @@ static struct {
 
 #define PART 1000000
 
-static struct {
-    unsigned int first, last;
-    char filename[64];
-} data[1000];
-
 static int selprime(const struct dirent *dir) {
     return strncmp(dir->d_name, "PrimeData", 9) == 0;
 }
@@ -37,7 +33,12 @@ static int namesort(const struct dirent **p_dir1, const struct dirent **p_dir2) 
     else return 1;
 }
 
-static void ingest(char *filename) {
+typedef struct init_s {
+    unsigned int first, last;
+    char filename[64];
+} init_t;
+
+static void ingest(char *filename, init_t *init) {
     // TODO
     printf("Ingest %s\n", filename);
 }
@@ -45,19 +46,24 @@ static void ingest(char *filename) {
 void primes_init(int is_init) {
     int num_files;
     struct dirent **p_dirlist, *p_dir;
-    
+    init_t *init;
+
     self.part = 0;
     self.offset = 0;
     self.primes[0] = calloc(sizeof(unsigned int), PART);
 
     if (!is_init) {
         num_files = scandir(".", &p_dirlist, selprime, namesort);
-
-        for (int i = 0; i < num_files; i++) {
-            struct dirent *p_dir = &(*p_dirlist)[i];
-            ingest(p_dir->d_name);
+        
+        if (num_files > 0) {
+            init = calloc(sizeof(init_t), num_files);
+            for (int i = 0; i < num_files; i++) {
+                struct dirent *p_dir = &(*p_dirlist)[i];
+                ingest(p_dir->d_name, &init[i]);
+            }
+            free(init);
+            free(p_dirlist);
         }
-        if (num_files > 0) free(p_dirlist);
     }
 }
 
@@ -117,6 +123,11 @@ unsigned int prime_next(void *arg) {
     return prime;
 }
 
+unsigned int prime_index(void *arg) {
+    iterator_t *this = (iterator_t*)arg;
+    return this->part * PART + this->offset - 1;
+}
+
 void prime_end(void *arg) {
     free(arg);
 }
@@ -171,4 +182,3 @@ void primes_add_seq(void *arg) {
     
     free(arg);
 }
-

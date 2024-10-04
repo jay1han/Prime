@@ -20,7 +20,7 @@ char numbers_list[64];
 
 int cores = 8;
 unsigned int show = 10000;
-int print_primes = 0;
+int print_primes = 1;
 int write_numbers = 0;
 int print_numbers = 0;
 int dont_run = 0;
@@ -105,8 +105,6 @@ int main (int argc, char **argv) {
     if(parse(argc - 1, argv + 1)) return 0;
 
     primes_init(is_init);
-    // TODO remove when ingest done
-    if (primes_count() < 2) return 0;
 
     if (is_init) {
         primes_add(2);
@@ -119,6 +117,9 @@ int main (int argc, char **argv) {
                2, span, primes_count());
         numbers_close();
     }
+    
+    // TODO remove when ingest done
+    if (primes_count() < 2) return 0;
     
     while (next <= upto) {
         unsigned int first = next;

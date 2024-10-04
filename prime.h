@@ -50,6 +50,9 @@ unsigned int prime_next(
     );                   // returns the next prime or 0 if no more
                          // release the iterator automatically
 
+// Return the index of this prime
+unsigned int prime_index(void *iterator);
+
 // Release the iterator
 void prime_end(
     void *iterator
