@@ -45,7 +45,6 @@ int parse(int argc, char **argv) {
         else if (argv[i][0] == 'a') write_numbers = 1;
         else if (argv[i][0] == 'h') print_numbers = 1;
         else if (argv[i][0] == 'n') print_primes = 0;
-        else if (argv[i][0] == 'q') show = 0;
         else if (argv[i][0] == 'p') sscanf(&argv[i][1], "%d", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%u", &span);
         else dont_run = 1;
@@ -76,7 +75,6 @@ int parse(int argc, char **argv) {
         printf("\ta\twrite numbers.dat\n");
         printf("\th\tprint numbers.lst\n");
         printf("\tn\tdo not write primes.dat\n");
-        printf("\tq\tquiet\n");
         printf("\tp#\tshow progress every #\n");
         printf("\ts#\tspan of computation\n");
         printf("\t?\tdon't run, show parameters\n");
@@ -100,7 +98,7 @@ int main (int argc, char **argv) {
     char memory_s[20], filesize_s[20];
     void *workers[16];
     void *sequence[16];
-    unsigned int next = from;
+    unsigned int next;
 
     if(parse(argc - 1, argv + 1)) return 0;
 
@@ -119,7 +117,7 @@ int main (int argc, char **argv) {
         if (write_numbers) numbers_write(numbers_data);
         if (print_numbers) numbers_print(numbers_list);
         numbers_close();
-    }
+    } else next = from;
     
     while (next <= upto) {
         unsigned int first = next;
