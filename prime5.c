@@ -26,14 +26,6 @@ int do_numbers = 0;
 int dont_run = 0;
 int is_init = 0;
 
-char *pretty(long int size, char *text) {
-    if (size < 10e3) sprintf(text, "%ld", size);
-    else if (size < 10e6) sprintf(text, "%.1lfK", (double)size / 1e3);
-    else if (size < 10e9L) sprintf(text, "%.1lfM", (double)size / 1e6);
-    else sprintf(text, "%.1lfG", (double)size / 1e9);
-    return text;
-}
-
 int parse(int argc, char **argv) {
     dont_run = argc == 0;
     
@@ -51,7 +43,7 @@ int parse(int argc, char **argv) {
     }
     
     if (cores > 16) cores = 16;
-    if (upto >= 1e9) upto = 1e9;
+    if (upto > 4e9) upto = 4e9;
     if (upto < 1000) upto = 1000;
     if (span > (upto / cores)) span = upto / (cores + 1);
     if (((upto - span) % span) != 0) {

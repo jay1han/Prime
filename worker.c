@@ -28,7 +28,7 @@ void decomp(unsigned int original, void *sequence, int do_numbers) {
         factor = prime_next(prime);
         if (factor == 0) break;
     }
-    if (do_numbers) prime_end(prime);
+    prime_end(prime);
     
     if (remainder == original) {
         if (sequence == NULL) primes_add(original);
