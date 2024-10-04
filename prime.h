@@ -4,7 +4,7 @@
 #define _PRIME_H_
 
 // Allocate
-void primes_init();
+void primes_init(int threads, int is_init);
 
 // Add a number to the sequence
 void primes_add(
@@ -13,6 +13,9 @@ void primes_add(
 
 // Returns the number of primes so far
 unsigned int primes_count();
+
+// Return the prime number for this index
+unsigned int prime_number(unsigned int prime_i);
 
 // Allocate a sequence of primes
 void *seq_alloc(

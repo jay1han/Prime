@@ -34,7 +34,14 @@ void number_isprime(
     void *number
     );
 
-// Add a factor to the number
+// Add an indexed prime to the number
+void number_addprime(
+    void *number,
+    int prime_i,
+    int exponent
+    );
+
+// Add an arbitrary factor to the number
 void number_addfactor(
     void *number,
     unsigned int factor,

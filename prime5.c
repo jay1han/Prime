@@ -19,7 +19,7 @@ char numbers_data[64];
 char numbers_list[64];
 
 int cores = 8;
-unsigned int show = 10000;
+unsigned int show = 0;
 int print_primes = 1;
 int write_numbers = 0;
 int print_numbers = 0;
@@ -104,7 +104,7 @@ int main (int argc, char **argv) {
 
     if(parse(argc - 1, argv + 1)) return 0;
 
-    primes_init(is_init);
+    primes_init(cores, is_init);
 
     if (is_init) {
         primes_add(2);
@@ -115,6 +115,9 @@ int main (int argc, char **argv) {
     
         printf("Init %u..%u : %u primes\n",
                2, span, primes_count());
+        
+        if (write_numbers) numbers_write(numbers_data);
+        if (print_numbers) numbers_print(numbers_list);
         numbers_close();
     }
     
@@ -143,8 +146,8 @@ int main (int argc, char **argv) {
             primes_add_seq(sequence[thread]);
         
         unsigned int latest = primes_count();
-        printf("Span %u..%u : %u primes, total %u\n",
-               first, next - 1, latest - sofar, latest);
+        printf("Span %u..%u on %d threads: %u primes, total %u\n",
+               first, next - 1, threads, latest - sofar, latest);
         if (write_numbers) numbers_write(numbers_data);
         if (print_numbers) numbers_print(numbers_list);
         numbers_close();

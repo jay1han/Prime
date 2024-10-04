@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "prime.h"
 #include "number.h"
 
@@ -16,7 +17,7 @@ void decomp(unsigned int original, void *sequence) {
                 exponent++;
                 remainder /= factor;
             } while ((remainder % factor) == 0);
-            number_addfactor(number, factor, exponent);
+            number_addprime(number, prime_index(prime), exponent);
         }
         factor = prime_next(prime);
         if (factor == 0) break;

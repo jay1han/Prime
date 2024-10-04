@@ -11,9 +11,16 @@ typedef struct iterator_s {
     int part, offset;
 } iterator_t;
 
+typedef struct seq_s {
+    unsigned int span, offset;
+    unsigned int *primes;
+} seq_t;
+
 static struct {
     int part, offset;
     unsigned int *primes[1000];
+    seq_t *sequences;
+    int threads;
 } self;
 
 #define PART 1000000
@@ -52,7 +59,7 @@ static void ingest(init_t *init) {
     primes_add_seq(sequence);
 }
 
-void primes_init(int is_init) {
+void primes_init(int threads, int is_init) {
     int num_files;
     struct dirent **p_dirlist, *p_dir;
     init_t *init;
@@ -60,6 +67,8 @@ void primes_init(int is_init) {
     self.part = 0;
     self.offset = 0;
     self.primes[0] = calloc(sizeof(unsigned int), PART);
+    self.threads = threads;
+    self.sequences = calloc(sizeof(seq_t), threads);
 
     if (!is_init) {
         num_files = scandir(".", &p_dirlist, selprime, namesort);
@@ -94,6 +103,12 @@ void primes_add(unsigned int prime) {
 
 unsigned int primes_count() {
     return self.part * PART + self.offset;
+}
+
+unsigned int prime_number(unsigned int prime_i) {
+    int part = prime_i / PART;
+    int offset = prime_i - (part * PART);
+    return self.primes[part][offset];
 }
 
 void primes_write(char *filename, unsigned int from, unsigned int upto) {
@@ -152,14 +167,17 @@ void prime_end(void *arg) {
     free(arg);
 }
 
-typedef struct seq_s {
-    unsigned int span, offset;
-    unsigned int *primes;
-} seq_t;
-
 void *seq_alloc(unsigned int span) {
-    seq_t *sequence = malloc(sizeof(seq_t));
+    seq_t *sequence;
+    int i;
 
+    for (i = 0; i < self.threads; i++) {
+        if (self.sequences[i].primes == NULL) {
+            sequence = &self.sequences[i];
+            break;
+        }
+    }
+    
     sequence->span   = span / 2;
     sequence->offset = 0;
     sequence->primes = malloc(sizeof(unsigned int) * span / 2);
@@ -200,5 +218,5 @@ void primes_add_seq(void *arg) {
             );
     }
     
-    free(arg);
+    sequence->primes = NULL;
 }
