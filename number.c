@@ -44,9 +44,9 @@ void numbers_print(char *filename) {
 
     for (unsigned int index = 0; index <= self.last - self.first; index++) {
         if (self.numbers[index].divisors == 0)
-            fprintf(file, "%10u is Prime\n", self.first + index);
+            fprintf(file, "%uP\n", self.first + index);
         else {
-            fprintf(file, "%10u =", self.first + index);
+            fprintf(file, "%u:", self.first + index);
             for (int divisor = 0; divisor < self.numbers[index].divisors; divisor++) {
                 fprintf(file, " %u^%d",
                         self.numbers[index].factors[divisor].factor,
