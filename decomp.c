@@ -1,8 +1,9 @@
+#include <stdlib.h>
 #include "prime.h"
 #include "number.h"
 
 // Store decomposition in *number_p and return 1 only if prime
-void decomp(unsigned int original) {
+void decomp(unsigned int original, void *sequence) {
     unsigned int remainder = original;
     void *number = number_new(original);
     void *prime = prime_new();
@@ -22,7 +23,10 @@ void decomp(unsigned int original) {
     }
     prime_end(prime);
     
-    if (remainder == original) primes_add(original);
+    if (remainder == original) {
+        if (sequence == NULL) primes_add(original);
+        else seq_add(sequence, original);
+    }
     else if (remainder > 1) number_addfactor(number, remainder, 1);
     
     number_done(number);

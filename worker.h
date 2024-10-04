@@ -8,8 +8,8 @@ void *worker_start(
     unsigned int show
     );                      // returns a worker object
 
-// Wait for a worker to finish
-void worker_join(
+// Wait for a worker to finish and return the sequence
+void *worker_join(
     void *arg
     );
 

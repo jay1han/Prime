@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "prime.h"
 
 // Object-like structure to retrieve contiguous list of primes
@@ -38,7 +39,9 @@ void primes_output(char *filename) {
     FILE *file = fopen(filename, "w");
     void *iterator = prime_new();
     unsigned int prime = prime_next(iterator);
-    
+
+    fprintf(file, "Total %u primes\n", primes_count());
+
     while (prime != 0) {
         fprintf(file, "%u\n", prime);
         prime = prime_next(iterator);
@@ -68,3 +71,55 @@ unsigned int prime_next(void *arg) {
 void prime_end(void *arg) {
     free(arg);
 }
+
+typedef struct seq_s {
+    unsigned int span, offset;
+    unsigned int *primes;
+} seq_t;
+
+void *seq_alloc(unsigned int span) {
+    seq_t *sequence = malloc(sizeof(seq_t));
+
+    sequence->span   = span / 2;
+    sequence->offset = 0;
+    sequence->primes = malloc(sizeof(unsigned int) * span / 2);
+    return (void*)sequence;
+}
+
+void seq_add(void *arg, unsigned int prime) {
+    seq_t *sequence = (seq_t*)arg;
+
+    sequence->primes[sequence->offset] = prime;
+    sequence->offset++;
+}
+
+void primes_add_seq(void *arg) {
+    seq_t *sequence = (seq_t*)arg;
+
+    if (self.offset + sequence->offset < PART) {
+        memcpy(
+            self.primes[self.part] + self.offset,
+            sequence->primes,
+            sizeof(unsigned int) * sequence->offset
+            );
+        self.offset += sequence->offset;
+    } else {
+        unsigned int part = PART - self.offset;
+        memcpy(
+            self.primes[self.part] + self.offset,
+            sequence->primes,
+            sizeof(unsigned int) * part
+            );
+        self.part++;
+        self.primes[self.part] = calloc(sizeof(unsigned int), PART);
+        self.offset = sequence->offset - part;
+        memcpy(
+            self.primes[self.part],
+            &sequence->primes[part],
+            sizeof(unsigned int) * self.offset
+            );
+    }
+    
+    free(arg);
+}
+

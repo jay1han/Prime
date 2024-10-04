@@ -18,6 +18,7 @@ int cores = 8;
 unsigned int show = 10000;
 int write_primes = 1;
 int write_numbers = 0;
+int dont_run = 0;
 
 char *pretty(long int size, char *text) {
     if (size < 10e3) sprintf(text, "%ld", size);
@@ -28,6 +29,8 @@ char *pretty(long int size, char *text) {
 }
 
 int parse(int argc, char **argv) {
+    dont_run = argc == 0;
+    
     for (int i = 0; i < argc; i++) {
         if (argv[i][0] == '-') strcpy(primes_file, &argv[i][1]);
         else if (argv[i][0] == '+') strcpy(numbers_file, &argv[i][1]);
@@ -37,6 +40,7 @@ int parse(int argc, char **argv) {
         else if (argv[i][0] == 'q') show = 0;
         else if (argv[i][0] == 'p') sscanf(&argv[i][1], "%d", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%u", &span);
+        else if (argv[i][0] == '?') dont_run = 1;
         else sscanf(argv[i], "%u", &upto);
     }
     
@@ -49,7 +53,7 @@ int parse(int argc, char **argv) {
         span = upto / (turns * cores);
     }
 
-    if (argc == 0) {
+    if (dont_run) {
         printf("Options\n");
         printf("\t-<name>\tprimes_file\n");
         printf("\t+<name>\tnumbers_file\n");
@@ -60,29 +64,31 @@ int parse(int argc, char **argv) {
         printf("\tp#\tshow progress every #\n");
         printf("\t#\tup to\n");
         printf("\ts#\tspan of computation\n");
+        printf("\t?\tdon't run, show parameters\n");
     }
     
     printf("Up to %u in spans of %u on %d threads ", upto, span, cores);
     if (show == 0) printf("quiet\n");
     else printf("show %u's\n", show);
 
-    return argc;
+    return dont_run;
 }
 
 int main (int argc, char **argv) {
     long int memory = 0, filesize = 0;
     char memory_s[20], filesize_s[20];
     void *workers[16];
+    void *sequence[16];
     unsigned int next;
 
-    if(parse(argc - 1, argv + 1) == 0) return 0;
+    if(parse(argc - 1, argv + 1)) return 0;
 
     primes_init();
     primes_add(2);
     numbers_init(3, span);
     
     for (next = 3; next <= span; next++)
-        decomp(next);
+        decomp(next, NULL);
     
     printf("Span %u..%u : %u primes\n",
            2, span, primes_count());
@@ -107,8 +113,11 @@ int main (int argc, char **argv) {
         }
     
         for (int thread = 0; thread < threads; thread++)
-            worker_join(workers[thread]);
+            sequence[thread] = worker_join(workers[thread]);
 
+        for (int thread = 0; thread < threads; thread++)
+            primes_add_seq(sequence[thread]);
+        
         unsigned int latest = primes_count();
         printf("Span %u..%u : %u primes, total %u\n",
                first, next - 1, latest - sofar, latest);

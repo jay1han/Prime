@@ -14,6 +14,22 @@ void primes_add(
 // Returns the number of primes so far
 unsigned int primes_count();
 
+// Allocate a sequence of primes
+void *seq_alloc(
+    unsigned int span
+    );
+
+// Add a prime to sequence
+void seq_add(
+    void *arg,
+    unsigned int prime
+    );
+
+// Return the sequence to the master list
+void primes_add_seq(
+    void *arg
+    );
+
 // Write to file
 void primes_output(
     char *filename
