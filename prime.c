@@ -3,7 +3,6 @@
 #include <string.h>
 #include <dirent.h>
 #include "prime.h"
-#include "pack.h"
 
 // Object-like structure to retrieve contiguous list of primes
 // The list is the data, and callers use an iterator to go through the list
@@ -38,9 +37,19 @@ typedef struct init_s {
     char filename[64];
 } init_t;
 
-static void ingest(char *filename, init_t *init) {
-    // TODO
-    printf("Ingest %s\n", filename);
+static void ingest(init_t *init) {
+    FILE *file;
+    void *sequence;
+    unsigned int first, last, prime;
+    
+    printf("Ingest %s from %u to %u\n", init->filename, init->first, init->last);
+    sequence = seq_alloc(init->last - init->first + 1);
+
+    file = fopen(init->filename, "rb");
+    while (fread(&prime, sizeof(unsigned int), 1, file) == 1)
+        seq_add(sequence, prime);
+    fclose(file);
+    primes_add_seq(sequence);
 }
 
 void primes_init(int is_init) {
@@ -57,10 +66,18 @@ void primes_init(int is_init) {
         
         if (num_files > 0) {
             init = calloc(sizeof(init_t), num_files);
+            
             for (int i = 0; i < num_files; i++) {
-                struct dirent *p_dir = &(*p_dirlist)[i];
-                ingest(p_dir->d_name, &init[i]);
+                struct dirent *p_dir = p_dirlist[i];
+                strcpy(init[i].filename, p_dir->d_name);
+                sscanf(strchr(init[i].filename, '_') + 1, "%u", &init[i].first);
+                sscanf(strchr(init[i].filename, '-') + 1, "%u", &init[i].last);
             }
+            
+            for (int i = 0; i < num_files; i++) {
+                ingest(&init[i]);
+            }
+            
             free(init);
             free(p_dirlist);
         }
@@ -79,25 +96,28 @@ unsigned int primes_count() {
     return self.part * PART + self.offset;
 }
 
-void primes_write(char *filename) {
+void primes_write(char *filename, unsigned int from, unsigned int upto) {
     FILE *file = fopen(filename, "wb");
     void *iterator = prime_new();
     unsigned int prime = prime_next(iterator);
 
-    // TODO write binary
-    while (prime != 0) {
-        fprintf(file, "%u\n", prime);
+    while (prime < from) prime = prime_next(iterator);
+    
+    while (prime != 0 && prime <= upto) {
+        fwrite(&prime, sizeof(unsigned int), 1, file);
         prime = prime_next(iterator);
     }
     fclose(file);
 }
 
-void primes_print(char *filename) {
+void primes_print(char *filename, unsigned int from, unsigned int upto) {
     FILE *file = fopen(filename, "w");
     void *iterator = prime_new();
     unsigned int prime = prime_next(iterator);
 
-    while (prime != 0) {
+    while (prime < from) prime = prime_next(iterator);
+    
+    while (prime != 0 && prime <= upto) {
         fprintf(file, "%u\n", prime);
         prime = prime_next(iterator);
     }

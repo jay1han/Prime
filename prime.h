@@ -32,12 +32,16 @@ void primes_add_seq(
 
 // Write to file
 void primes_write(
-    char *filename
+    char *filename,
+    unsigned int from,
+    unsigned int upto
     );
 
 // Write to file
 void primes_print(
-    char *filename
+    char *filename,
+    unsigned int from,
+    unsigned int upto
     );
 
 // Allocate an iterator

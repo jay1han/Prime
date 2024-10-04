@@ -39,8 +39,8 @@ int parse(int argc, char **argv) {
     
     for (int i = 0; i < argc; i++) {
         if (argv[i][0] == 'i') is_init = 1;
-        else if (argv[i][0] == '+') sscanf(argv[i], "%u", &upto);
-        else if (argv[i][0] == '-') sscanf(argv[i], "%u", &from);
+        else if (argv[i][0] == '+') sscanf(&argv[i][1], "%u", &upto);
+        else if (argv[i][0] == '-') sscanf(&argv[i][1], "%u", &from);
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 'a') write_numbers = 1;
         else if (argv[i][0] == 'h') print_numbers = 1;
@@ -118,9 +118,6 @@ int main (int argc, char **argv) {
         numbers_close();
     }
     
-    // TODO remove when ingest done
-    if (primes_count() < 2) return 0;
-    
     while (next <= upto) {
         unsigned int first = next;
         unsigned int sofar = primes_count();
@@ -154,8 +151,8 @@ int main (int argc, char **argv) {
     }
 
     printf("Total %u primes\n", primes_count());
-    primes_write(primes_data);
-    if (print_primes) primes_print(primes_list);
+    primes_write(primes_data, from, upto);
+    if (print_primes) primes_print(primes_list, from, upto);
     
     return 0;
 }
