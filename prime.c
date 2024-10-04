@@ -32,8 +32,8 @@ static int selprime(const struct dirent *dir) {
 static int namesort(const struct dirent **p_dir1, const struct dirent **p_dir2) {
     unsigned int num1, num2;
 
-    sscanf(&(*p_dir1)->d_name[9], "%u", &num1);
-    sscanf(&(*p_dir2)->d_name[9], "%u", &num2);
+    sscanf(&(*p_dir1)->d_name[10], "%u", &num1);
+    sscanf(&(*p_dir2)->d_name[10], "%u", &num2);
     if (num1 == num2) return 0;
     else if (num1 < num2) return -1;
     else return 1;
@@ -47,16 +47,26 @@ typedef struct init_s {
 static void ingest(init_t *init) {
     FILE *file;
     void *sequence;
-    unsigned int first, last, prime;
+    unsigned int prime, count;
     
     printf("Ingest %s from %u to %u\n", init->filename, init->first, init->last);
-    sequence = seq_alloc(init->last - init->first + 1);
 
     file = fopen(init->filename, "rb");
-    while (fread(&prime, sizeof(unsigned int), 1, file) == 1)
+    
+    count = 0;
+    sequence = seq_alloc(init->last - init->first + 1);
+    
+    while (fread(&prime, sizeof(unsigned int), 1, file) == 1) {
         seq_add(sequence, prime);
+        if (++count == PART) {
+            primes_add_seq(sequence);
+            sequence = seq_alloc(init->last - init->first + 1);
+            count = 0;
+        }
+    }
     fclose(file);
-    primes_add_seq(sequence);
+    
+    if (count > 0) primes_add_seq(sequence);
 }
 
 void primes_init(int threads, int is_init) {

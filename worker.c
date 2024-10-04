@@ -1,9 +1,43 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
-#include "worker.h"
-#include "decomp.h"
+#include "number.h"
 #include "prime.h"
+
+void decomp(unsigned int original, void *sequence, int do_numbers) {
+    unsigned int remainder = original;
+    void *number;
+    void *prime = prime_new();
+    unsigned int factor = prime_next(prime);
+
+    if (do_numbers) number = number_new(original);
+    while (factor * factor <= remainder) {
+        if ((remainder % factor) == 0) {
+            if (do_numbers) {
+                int exponent = 0;
+                do {
+                    exponent++;
+                    remainder /= factor;
+                } while ((remainder % factor) == 0);
+                number_addprime(number, prime_index(prime), exponent);
+            } else {
+                remainder = 0;
+                break;
+            }
+        }
+        factor = prime_next(prime);
+        if (factor == 0) break;
+    }
+    if (do_numbers) prime_end(prime);
+    
+    if (remainder == original) {
+        if (sequence == NULL) primes_add(original);
+        else seq_add(sequence, original);
+    }
+    else if (remainder > 1) number_addfactor(number, remainder, 1);
+    
+    if (do_numbers) number_done(number);
+}
 
 typedef struct worker_s {
     unsigned int first;
@@ -11,6 +45,7 @@ typedef struct worker_s {
     unsigned int show;
     pthread_t thread;
     void *sequence;
+    int do_numbers;
 } worker_t;
 
 static void *work(void *arg) {
@@ -20,19 +55,20 @@ static void *work(void *arg) {
     for (number = worker->first; number <= worker->last; number++) {
         if (worker->show != 0 && (number % worker->show) == 0)
             printf("%u\n", number);
-        decomp(number, worker->sequence);
+        decomp(number, worker->sequence, worker->do_numbers);
     }
     return arg;
 }
 
-void *worker_start(unsigned int first, unsigned int last, unsigned int show) {
+void *worker_start(unsigned int first, unsigned int last, unsigned int show, int do_numbers) {
     worker_t *worker;
 
     worker = malloc(sizeof(worker_t));
     worker->first = first;
     worker->last  = last;
     worker->show  = show;
-    worker->sequence = seq_alloc(last - first);
+    worker->do_numbers = do_numbers;
+    worker->sequence   = seq_alloc(last - first);
 
     pthread_create(&worker->thread, NULL, work, worker);
     return (void*)worker;

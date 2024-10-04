@@ -1,6 +1,6 @@
 CC := gcc -c -ggdb -MMD -MF
 LD := gcc
-ALLOBJECTS := prime.o decomp.o worker.o prime5.o number.o 
+ALLOBJECTS := prime.o worker.o prime5.o number.o 
 
 prime5: $(ALLOBJECTS)
 	$(LD) $^ -o $@

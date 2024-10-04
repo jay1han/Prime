@@ -8,7 +8,6 @@
 #include "worker.h"
 #include "prime.h"
 #include "number.h"
-#include "decomp.h"
 
 unsigned int from = 2;
 unsigned int upto = 1000000;
@@ -23,6 +22,7 @@ unsigned int show = 0;
 int print_primes = 1;
 int write_numbers = 0;
 int print_numbers = 0;
+int do_numbers = 0;
 int dont_run = 0;
 int is_init = 0;
 
@@ -58,6 +58,7 @@ int parse(int argc, char **argv) {
         unsigned int turns = upto / (cores * span) + 1;
         span = upto / (turns * cores);
     }
+    if (write_numbers || print_numbers) do_numbers = 1;
 
     sprintf(primes_data, "PrimeData_%u-%u.dat", from, upto);
     sprintf(primes_list, "PrimeList_%u-%u.lst", from, upto);
@@ -74,7 +75,7 @@ int parse(int argc, char **argv) {
         printf("\tt#\tthreads\n");
         printf("\ta\twrite numbers.dat\n");
         printf("\th\tprint numbers.lst\n");
-        printf("\tn\tdo not write primes.dat\n");
+        printf("\tn\tdo not print primes.lst\n");
         printf("\tp#\tshow progress every #\n");
         printf("\ts#\tspan of computation\n");
         printf("\t?\tdon't run, show parameters\n");
@@ -83,6 +84,7 @@ int parse(int argc, char **argv) {
     printf("From %u to %u in spans of %u on %d threads", from, upto, span, cores);
     if (show == 0) printf(" quietly");
     else printf(" show %u's", show);
+    if (!do_numbers) printf(" no Numbers");
     printf(" >%s", primes_data);
     if (print_primes) printf(" >%s", primes_list);
     if (write_numbers) printf(" >%s", numbers_data);
@@ -109,7 +111,7 @@ int main (int argc, char **argv) {
         numbers_init(2, span);
         
         for (next = 3; next <= span; next++)
-            decomp(next, NULL);
+            decomp(next, NULL, do_numbers);
     
         printf("Init %u..%u : %u primes\n",
                2, span, primes_count());
@@ -129,11 +131,11 @@ int main (int argc, char **argv) {
         
         for (threads = 0; threads < cores; threads++) {
             if (next + span > upto) {
-                workers[threads++] = worker_start(next, upto, show);
+                workers[threads++] = worker_start(next, upto, show, do_numbers);
                 next = upto + 1;
                 break;
             }
-            workers[threads] = worker_start(next, next + span - 1, show);
+            workers[threads] = worker_start(next, next + span - 1, show, do_numbers);
             next += span;
         }
     
