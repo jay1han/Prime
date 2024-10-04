@@ -1,25 +1,21 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "number.h"
+#include "prime.h"
 
 typedef struct __attribute__((packed)) factor_s {
     unsigned int factor;
     unsigned char exponent;
 } factor_t;
 
-typedef struct __attribute__((packed)) packed_s {
+typedef struct __attribute__((packed)) number_s {
     unsigned char divisors;
-    factor_t *factors;
-} packed_t;
-
-typedef struct number_s {
-    unsigned int number;
-    unsigned int divisors;
     factor_t factors[10];
 } number_t;
 
 static struct {
-    packed_t *numbers;
+    number_t *numbers;
     unsigned int first, last;
 } self;
 
@@ -30,7 +26,37 @@ void numbers_init(unsigned int first, unsigned int last) {
 }
 
 void numbers_output(char *filename) {
-    // TODO
+    unsigned int first = self.first;
+    FILE *file = fopen(filename, "ab");
+
+    for (unsigned int index = 0; index <= self.last - self.first; index++) {
+        fwrite(&self.numbers[index],
+               sizeof(factor_t) * self.numbers[index].divisors + 1,
+               1, file);
+    }
+    
+    fclose(file);
+}
+
+void numbers_print(char *filename) {
+    unsigned int first = self.first;
+    FILE *file = fopen(filename, "a");
+
+    for (unsigned int index = 0; index <= self.last - self.first; index++) {
+        if (self.numbers[index].divisors == 0)
+            fprintf(file, "%10u is Prime\n", self.first + index);
+        else {
+            fprintf(file, "%10u =", self.first + index);
+            for (int divisor = 0; divisor < self.numbers[index].divisors; divisor++) {
+                fprintf(file, " %u^%d",
+                        self.numbers[index].factors[divisor].factor,
+                        self.numbers[index].factors[divisor].exponent);
+            }
+            fprintf(file, "\n");
+        }
+    }
+    
+    fclose(file);
 }
 
 void numbers_close() {
@@ -40,8 +66,7 @@ void numbers_close() {
 
 void *number_new(unsigned int number) {
     if (self.last == 0 || number < self.first || number > self.last) return NULL;
-    number_t *this = (number_t*)malloc(sizeof(number_t));
-    this->number   = number;
+    number_t *this = &self.numbers[number - self.first];
     this->divisors = 0;
     return (void*)this;
 }
@@ -54,12 +79,4 @@ void number_addfactor(void *arg, unsigned int factor, int exponent) {
 }
 
 void number_done(void *arg) {
-    number_t *this = (number_t*)arg;
-    if (this->divisors == 0) return;
-
-    unsigned int offset = this->number - self.first;
-    self.numbers[offset].divisors = this->divisors;
-    self.numbers[offset].factors = malloc(sizeof(factor_t) * this->divisors);
-    memcpy(self.numbers[offset].factors, this->factors, sizeof(factor_t) * this->divisors);
-    free(this);
 }
