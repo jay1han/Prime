@@ -11,7 +11,7 @@ void numbers_init(
 
 // After all numbers in this iteration have been computed,
 // Store the current list in binary form to file {fd}
-void numbers_output(
+void numbers_write(
     char *filename
     );
 

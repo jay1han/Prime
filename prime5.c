@@ -10,18 +10,21 @@
 #include "number.h"
 #include "decomp.h"
 
-unsigned int upto = 1000;
-unsigned int span = 100;
-char primes_file[40] = "primes.lst";
-char numbers_file[40] = "numbers.dat";
-char print_file[40] = "numbers.lst";
+unsigned int from = 2;
+unsigned int upto = 1000000;
+unsigned int span = 10000;
+char primes_data[64];
+char primes_list[64];
+char numbers_data[64];
+char numbers_list[64];
 
 int cores = 8;
 unsigned int show = 10000;
-int write_primes = 1;
+int print_primes = 0;
 int write_numbers = 0;
 int print_numbers = 0;
 int dont_run = 0;
+int is_init = 0;
 
 char *pretty(long int size, char *text) {
     if (size < 10e3) sprintf(text, "%ld", size);
@@ -35,15 +38,17 @@ int parse(int argc, char **argv) {
     dont_run = argc == 0;
     
     for (int i = 0; i < argc; i++) {
-        if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
+        if (argv[i][0] == 'i') is_init = 1;
+        else if (argv[i][0] == '+') sscanf(argv[i], "%u", &upto);
+        else if (argv[i][0] == '-') sscanf(argv[i], "%u", &from);
+        else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 'a') write_numbers = 1;
         else if (argv[i][0] == 'h') print_numbers = 1;
-        else if (argv[i][0] == 'n') write_primes = 0;
+        else if (argv[i][0] == 'n') print_primes = 0;
         else if (argv[i][0] == 'q') show = 0;
         else if (argv[i][0] == 'p') sscanf(&argv[i][1], "%d", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%u", &span);
-        else if (argv[i][0] == '?') dont_run = 1;
-        else sscanf(argv[i], "%u", &upto);
+        else dont_run = 1;
     }
     
     if (cores > 16) cores = 16;
@@ -55,22 +60,37 @@ int parse(int argc, char **argv) {
         span = upto / (turns * cores);
     }
 
+    sprintf(primes_data, "PrimeData_%u-%u.dat", from, upto);
+    sprintf(primes_list, "PrimeList_%u-%u.lst", from, upto);
+    sprintf(numbers_data, "NumberData_%u-%u.dat", from, upto);
+    unlink(numbers_data);
+    sprintf(numbers_list, "NumberList_%u-%u.lst", from, upto);
+    unlink(numbers_list);
+
     if (dont_run) {
         printf("Options\n");
+        printf("\ti\tinitialise data\n");
+        printf("\t-#\tstart from #\n");
+        printf("\t+#\tup to and including #\n");
         printf("\tt#\tthreads\n");
         printf("\ta\twrite numbers.dat\n");
         printf("\th\tprint numbers.lst\n");
-        printf("\tn\tdo not write primes.lst\n");
+        printf("\tn\tdo not write primes.dat\n");
         printf("\tq\tquiet\n");
         printf("\tp#\tshow progress every #\n");
-        printf("\t#\tup to\n");
         printf("\ts#\tspan of computation\n");
         printf("\t?\tdon't run, show parameters\n");
     }
     
-    printf("Up to %u in spans of %u on %d threads ", upto, span, cores);
-    if (show == 0) printf("quiet\n");
-    else printf("show %u's\n", show);
+    printf("From %u to %u in spans of %u on %d threads", from, upto, span, cores);
+    if (show == 0) printf(" quietly");
+    else printf(" show %u's", show);
+    printf(" >%s", primes_data);
+    if (print_primes) printf(" >%s", primes_list);
+    if (write_numbers) printf(" >%s", numbers_data);
+    if (print_numbers) printf(" >%s", numbers_list);
+    if (is_init) printf(" INIT");
+    printf("\n");
 
     return dont_run;
 }
@@ -80,24 +100,25 @@ int main (int argc, char **argv) {
     char memory_s[20], filesize_s[20];
     void *workers[16];
     void *sequence[16];
-    unsigned int next;
+    unsigned int next = from;
 
     if(parse(argc - 1, argv + 1)) return 0;
-    if (write_numbers) unlink(numbers_file);
-    if (print_numbers) unlink(print_file);
 
-    primes_init();
-    primes_add(2);
-    numbers_init(2, span);
+    primes_init(is_init);
+    // TODO remove when ingest done
+    if (primes_count() < 2) return 0;
+
+    if (is_init) {
+        primes_add(2);
+        numbers_init(2, span);
+        
+        for (next = 3; next <= span; next++)
+            decomp(next, NULL);
     
-    for (next = 3; next <= span; next++)
-        decomp(next, NULL);
-    
-    printf("Span %u..%u : %u primes\n",
-           2, span, primes_count());
-    if (write_numbers) numbers_output(numbers_file);
-    if (print_numbers) numbers_print(print_file);
-    numbers_close();
+        printf("Init %u..%u : %u primes\n",
+               2, span, primes_count());
+        numbers_close();
+    }
     
     while (next <= upto) {
         unsigned int first = next;
@@ -126,13 +147,14 @@ int main (int argc, char **argv) {
         unsigned int latest = primes_count();
         printf("Span %u..%u : %u primes, total %u\n",
                first, next - 1, latest - sofar, latest);
-        if (write_numbers) numbers_output(numbers_file);
-        if (print_numbers) numbers_print(print_file);
+        if (write_numbers) numbers_write(numbers_data);
+        if (print_numbers) numbers_print(numbers_list);
         numbers_close();
     }
 
     printf("Total %u primes\n", primes_count());
-    if (write_primes) primes_output(primes_file);
+    primes_write(primes_data);
+    if (print_primes) primes_print(primes_list);
     
     return 0;
 }

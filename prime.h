@@ -31,7 +31,12 @@ void primes_add_seq(
     );
 
 // Write to file
-void primes_output(
+void primes_write(
+    char *filename
+    );
+
+// Write to file
+void primes_print(
     char *filename
     );
 

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
 #include "prime.h"
 
 // Object-like structure to retrieve contiguous list of primes
@@ -17,10 +18,47 @@ static struct {
 
 #define PART 1000000
 
-void primes_init() {
+static struct {
+    unsigned int first, last;
+    char filename[64];
+} data[1000];
+
+static int selprime(const struct dirent *dir) {
+    return strncmp(dir->d_name, "PrimeData", 9) == 0;
+}
+
+static int namesort(const struct dirent **p_dir1, const struct dirent **p_dir2) {
+    unsigned int num1, num2;
+
+    sscanf(&(*p_dir1)->d_name[9], "%u", &num1);
+    sscanf(&(*p_dir2)->d_name[9], "%u", &num2);
+    if (num1 == num2) return 0;
+    else if (num1 < num2) return -1;
+    else return 1;
+}
+
+static void ingest(char *filename) {
+    // TODO
+    printf("Ingest %s\n", filename);
+}
+
+void primes_init(int is_init) {
+    int num_files;
+    struct dirent **p_dirlist, *p_dir;
+    
     self.part = 0;
     self.offset = 0;
     self.primes[0] = calloc(sizeof(unsigned int), PART);
+
+    if (!is_init) {
+        num_files = scandir(".", &p_dirlist, selprime, namesort);
+
+        for (int i = 0; i < num_files; i++) {
+            struct dirent *p_dir = &(*p_dirlist)[i];
+            ingest(p_dir->d_name);
+        }
+        if (num_files > 0) free(p_dirlist);
+    }
 }
 
 void primes_add(unsigned int prime) {
@@ -35,12 +73,23 @@ unsigned int primes_count() {
     return self.part * PART + self.offset;
 }
 
-void primes_output(char *filename) {
-    FILE *file = fopen(filename, "w");
+void primes_write(char *filename) {
+    FILE *file = fopen(filename, "wb");
     void *iterator = prime_new();
     unsigned int prime = prime_next(iterator);
 
-    fprintf(file, "Total %u primes\n", primes_count());
+    // TODO write binary
+    while (prime != 0) {
+        fprintf(file, "%u\n", prime);
+        prime = prime_next(iterator);
+    }
+    fclose(file);
+}
+
+void primes_print(char *filename) {
+    FILE *file = fopen(filename, "w");
+    void *iterator = prime_new();
+    unsigned int prime = prime_next(iterator);
 
     while (prime != 0) {
         fprintf(file, "%u\n", prime);

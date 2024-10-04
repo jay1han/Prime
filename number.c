@@ -25,12 +25,13 @@ void numbers_init(unsigned int first, unsigned int last) {
     self.numbers = calloc(sizeof(number_t), last - first + 1);
 }
 
-void numbers_output(char *filename) {
+void numbers_write(char *filename) {
     unsigned int first = self.first;
     FILE *file = fopen(filename, "ab");
 
     for (unsigned int index = 0; index <= self.last - self.first; index++) {
         fwrite(&self.numbers[index],
+               // TODO more compact
                sizeof(factor_t) * self.numbers[index].divisors + 1,
                1, file);
     }
