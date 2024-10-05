@@ -87,15 +87,18 @@ int main (int argc, char **argv) {
 
     if (is_init) {
         primes_add(2);
-        numbers_init(2, span);
+        if (do_numbers) numbers_init(2, span);
         
         for (next = 3; next <= span; next++)
             decomp(next, NULL, do_numbers);
     
         printlf("Init 2 .. % : % primes\n", span, primes_count());
         
-        if (do_numbers) numbers_write(numbers_data);
-        numbers_close();
+        if (do_numbers) {
+            numbers_write(numbers_data);
+            numbers_close();
+        }
+        
     } else {
         if (upto < primes_last()) {
             printlf("Already computed % > %\n", primes_last(), upto);
@@ -109,8 +112,10 @@ int main (int argc, char **argv) {
         long sofar = primes_count();
         int threads;
 
-        if (next + span * cores - 1 > upto) numbers_init(next, upto);
-        else numbers_init(next, next + span * cores - 1);
+        if (do_numbers) {
+            if (next + span * cores - 1 > upto) numbers_init(next, upto);
+            else numbers_init(next, next + span * cores - 1);
+        }
         
         for (threads = 0; threads < cores; threads++) {
             if (next + span > upto) {
@@ -131,12 +136,15 @@ int main (int argc, char **argv) {
         long latest = primes_count();
         printlf("Span % .. %", first, next - 1);
         printf(" on %d threads: ", threads);
-	printlf("% primes, total %\n", latest - sofar, latest);
-        if (do_numbers) numbers_write(numbers_data);
-        numbers_close();
+        printlf("% primes, total %\n", latest - sofar, latest);
+        if (do_numbers) {
+            numbers_write(numbers_data);
+            numbers_close();
+        }
     }
 
-    printlf("Total % primes\n", primes_count());
+    printlf("Total % primes last=%", primes_count(), primes_last());
+    printpf(" RAM usage %\n", primes_size());
     primes_write(upto, do_list);
     
     return 0;

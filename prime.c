@@ -16,7 +16,6 @@ typedef struct iterator_s {
 } iterator_t;
 
 typedef struct seq_s {
-    int size;                     // Size of sequence (in longs)
     int offset;                   // Current pointer in sequence
     long *primes;                 // Array of primes
 } seq_t;
@@ -114,6 +113,10 @@ void primes_init(int threads, int is_init) {
             
             free(p_dirlist);
         }
+
+        printf("Ingested %d files", num_files);
+        printlf(" % primes, last=%", primes_count(), primes_last());
+        printpf(" RAM usage %\n", primes_size());
     }
 }
 
@@ -121,12 +124,14 @@ void primes_init(int threads, int is_init) {
 void primes_add(long prime) {
     if (prime <= self.last) return;
 
-    self.offset += flex_fold(prime, &self.bytes[self.part][self.offset]);
+    self.offset += flex_fold(prime - self.last, &self.bytes[self.part][self.offset]);
     self.count++;
     if (self.offset >= PART - 9) {
         self.bytes[++self.part] = malloc(PART);
         self.offset = 0;
     }
+    
+    self.last = prime;
 }
 
 long primes_count() {
@@ -135,6 +140,10 @@ long primes_count() {
 
 long primes_last() {
     return self.last;
+}
+
+long primes_size() {
+    return (long)PART * (self.part + 1);
 }
 
 // Write the full list of primes, erasing the previous files
@@ -148,9 +157,6 @@ void primes_write(long upto, int do_list) {
     }
     if (num_files > 0) free(p_dirlist);
     
-    void *iterator = prime_new();
-    long prime = prime_next(iterator);
-        
     char datafile[64];
     sprintf(datafile, "%s.", DATA);
     sprintlf(datafile, "2-%.dat", upto);
@@ -161,6 +167,9 @@ void primes_write(long upto, int do_list) {
     sprintlf(listfile, "2-%.lst", upto);
     FILE *list = NULL;
     if (do_list) list = fopen(listfile, "w");
+        
+    void *iterator = prime_new();
+    long prime = prime_next(iterator);
         
     while (prime != 0) {
         fwrite(&prime, sizeof(long), 1, data);
@@ -176,14 +185,15 @@ void *prime_new() {
     iterator_t *iterator = (iterator_t*)malloc(sizeof(iterator_t));
     iterator->offset = 0;
     iterator->part = 0;
-    iterator->cumul = 1;
+    iterator->cumul = 0;
     return (void*)iterator;
 }
 
 // Return the next prime in list, 0 if none
 inline long prime_next(void *arg) {
     iterator_t *this = (iterator_t*)arg;
-    if (this->part == self.part && this->offset == self.offset) return 0;
+    if (this->cumul > 1 && this->part == self.part && this->offset == self.offset)
+        return 0;
 
     long step;
     this->offset += flex_open(&self.bytes[this->part][this->offset], &step);
@@ -219,7 +229,6 @@ void *seq_alloc(long size) {
         }
     }
     
-    sequence->size   = size;
     sequence->offset = 0;
     sequence->primes = calloc(sizeof(long), size);
     return (void*)sequence;
@@ -237,9 +246,8 @@ inline void seq_add(void *arg, long prime) {
 void primes_add_seq(void *arg) {
     seq_t *sequence = (seq_t*)arg;
 
-    if (sequence->offset == 0) return;
-
-    // TODO copy folded primes in sequence
+    for (int count = 0; count < sequence->offset; count++)
+        primes_add(sequence->primes[count]);
     
     sequence->primes = NULL;
 }

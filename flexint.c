@@ -79,31 +79,31 @@ inline int flex_open(unsigned char *bytes, long *value) {
     long number;
     int count = 0;
 
-    if (bytes[0] & 0x80 == 0) {
+    if ((bytes[0] & 0x80) == 0) {
         // One byte, 7 bits
         number = bytes[0] & 0x7F;
         count = 1;
-    } else if (bytes[0] & 0x40 == 0) {
+    } else if ((bytes[0] & 0x40) == 0) {
         // Two bytes, 6 + 8 = 14 bits
         number = bytes[1] | ((long)(bytes[0] & 0x3F) << 8);
         count = 2;
-    } else if (bytes[0] & 0x20 == 0) {
+    } else if ((bytes[0] & 0x20) == 0) {
         // Three bytes, 5 + 8 + 8 = 21 bits
         number = bytes[2] | ((long)bytes[1] << 8) | ((long)(bytes[0] & 0x1F) << 16);
         count = 3;
-    } else if (bytes[0] & 0x10 == 0) {
+    } else if ((bytes[0] & 0x10) == 0) {
         // Four bytes, 4 + 8 + 8 + 8 = 28 bits
         number = bytes[3] | ((long)bytes[2] << 8) | ((long)bytes[1] << 16) | (((long)bytes[0] & 0x0F) << 24);
         count = 4;
-    } else if (bytes[0] & 0x08 == 0) {
+    } else if ((bytes[0] & 0x08) == 0) {
         // 5 bytes, 3 + 4 * 8 = 35 bits
         number = bytes[4] | ((long)bytes[3] << 8) | ((long)bytes[2] << 16) | ((long)bytes[1] << 24) | (((long)bytes[0] & 0x07) << 32);
         count = 5;
-    } else if (bytes[0] & 0x04 == 0) {
+    } else if ((bytes[0] & 0x04) == 0) {
         // 6 bytes, 2 + 5 * 8 = 42 bits
         number = bytes[5] | ((long)bytes[4] << 8) | ((long)bytes[3] << 16) | ((long)bytes[2] << 24) | ((long)bytes[1] << 32) | (((long)bytes[0] & 0x03) << 40);
         count = 6;
-    } else if (bytes[0] & 0x04 == 0) {
+    } else if ((bytes[0] & 0x02) == 0) {
         // 7 bytes, 1 + 6 * 8 = 49 bits
         number = bytes[6] | ((long)bytes[5] << 8) | ((long)bytes[4] << 16) | ((long)bytes[3] << 24) | ((long)bytes[2] << 32) | ((long)bytes[1] << 40) | (((long)bytes[0] & 0x01) << 48);
         count = 7;

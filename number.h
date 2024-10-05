@@ -53,6 +53,7 @@ void number_done(
 // Print longs
 void printl(long num);
 void printlf(char *fmt, ...);
+void printpf(char *fmr, ...);
 int sprintl(char *output, long num);
 void sprintlf(char *output, char *fmt, ...);
 

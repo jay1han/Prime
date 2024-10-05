@@ -17,6 +17,9 @@ long primes_count();
 // Returns the highest prime after init
 long primes_last();
 
+// Returns RAM occupation
+long primes_size();
+
 // Allocate a sequence of primes
 void *seq_alloc(
     long span
