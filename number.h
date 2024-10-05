@@ -14,7 +14,8 @@ void numbers_init(
 // After all numbers in this iteration have been computed,
 // Store the current list in binary form to file {fd}
 void numbers_write(
-    char *filename
+    char *filename,
+    int format
     );
 
 // Close the numbers list
@@ -34,7 +35,7 @@ void number_isprime(
 // Add a known prime to the number
 void number_addprime(
     void *number,
-    long prime_i,
+    void *prime,
     unsigned char exponent
     );
 

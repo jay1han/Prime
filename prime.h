@@ -55,6 +55,9 @@ long prime_next(
 // Return the index of this prime
 long prime_index(void *iterator);
 
+// Return the current value
+long prime_value(void *arg);
+
 // Return index of number, or 0 if not found
 long prime_find(void *arg, long number);
 

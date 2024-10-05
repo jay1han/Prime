@@ -30,6 +30,7 @@ static int parse(int argc, char **argv) {
         else if (argv[i][0] == '-') sscanf(&argv[i][1], "%lu", &from);
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 'n') do_numbers = 1;
+        else if (argv[i][0] == 'N') do_numbers = 2;
         else if (argv[i][0] == 'p') do_list = 0;
         else if (argv[i][0] == 'v') sscanf(&argv[i][1], "%lu", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
@@ -46,9 +47,6 @@ static int parse(int argc, char **argv) {
         span = upto / (turns * cores);
     }
 
-    sprintlf(numbers_data, "%-%.dat", from, upto);
-    unlink(numbers_data);
-
     if (dont_run) {
         printf("Options\n");
         printf("\ti\tinitialise data\n");
@@ -56,6 +54,7 @@ static int parse(int argc, char **argv) {
         printf("\t+#\tup to and including #\n");
         printf("\tt#\tthreads\n");
         printf("\tn\twrite numbers.dat\n");
+        printf("\tN\twrite numbers.dxt\n");
         printf("\tp\tdo not print primes.lst\n");
         printf("\tv#\tshow progress every #\n");
         printf("\ts#\tspan of computation\n");
@@ -68,6 +67,10 @@ static int parse(int argc, char **argv) {
     else printlf(" show %'s", show);
     printf(" >Data");
     if (do_list) printf(" >List");
+    if (do_numbers == 1)
+        sprintlf(numbers_data, "%-%.dat", from, upto);
+    else if (do_numbers == 2)
+        sprintlf(numbers_data, "%-%.dxt", from, upto);
     if (do_numbers) printf(" >%s", numbers_data);
     else printf(" no numbers");
     if (is_init) printf(" INIT");
@@ -97,7 +100,7 @@ int main (int argc, char **argv) {
         printlf("Init 2 .. % : % primes\n", span, primes_count());
         
         if (do_numbers) {
-            numbers_write(numbers_data);
+            numbers_write(numbers_data, do_numbers);
             numbers_close();
         }
         
@@ -140,7 +143,7 @@ int main (int argc, char **argv) {
         printf(" on %d threads: ", threads);
         printlf("% primes, total %\n", latest - sofar, latest);
         if (do_numbers) {
-            numbers_write(numbers_data);
+            numbers_write(numbers_data, do_numbers);
             numbers_close();
         }
     }

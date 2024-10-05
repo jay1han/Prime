@@ -167,6 +167,13 @@ inline long prime_index(void *arg) {
     return this->index;
 }
 
+// Return the current value
+inline long prime_value(void *arg) {
+    iterator_t *this = (iterator_t*)arg;
+    return this->cumul;
+}
+
+// Return the index of number, or 0 if not found
 inline long prime_find(void *arg, long number) {
     iterator_t *this = (iterator_t*)arg;
 

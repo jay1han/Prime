@@ -28,7 +28,7 @@ void numbers_init(long first, long last) {
     self.numbers = calloc(sizeof(number_t), last - first + 1);
 }
 
-void numbers_write(char *filename) {
+void numbers_write(char *filename, int format) {
     long first = self.first;
     FILE *file = fopen(filename, "ab");
     unsigned char bytes[10];
@@ -36,15 +36,21 @@ void numbers_write(char *filename) {
     for (long index = 0; index <= self.last - self.first; index++) {
         fwrite(&self.numbers[index].divisors, 1, 1, file);
         for (int divisor = 0; divisor < self.numbers[index].divisors; divisor++) {
-            if (self.numbers[index].factors[divisor].prime_i > 0) {
+            if (format == 1) {
                 fwrite(bytes, 1,
-                       flex_fold(self.numbers[index].factors[divisor].prime_i, bytes),
+                       flex_fold(self.numbers[index].factors[divisor].factor, bytes),
                        file);
             } else {
-                bytes[0] = 0xFF;
-                fwrite(bytes, 1,
-                       flex_fold(self.numbers[index].factors[divisor].factor, bytes + 1) + 1,
-                       file);
+                if (self.numbers[index].factors[divisor].prime_i > 0) {
+                    fwrite(bytes, 1,
+                           flex_fold(self.numbers[index].factors[divisor].prime_i, bytes),
+                           file);
+                } else {
+                    bytes[0] = 0xFF;
+                    fwrite(bytes, 1,
+                           flex_fold(self.numbers[index].factors[divisor].factor, bytes + 1) + 1,
+                           file);
+                }
             }
             fwrite(&self.numbers[index].factors[divisor].exponent, 1, 1, file);
         }
@@ -65,9 +71,10 @@ void *number_new(long number) {
     return (void*)this;
 }
 
-inline void number_addprime(void *arg, long prime_i, unsigned char exponent) {
+inline void number_addprime(void *arg, void *prime, unsigned char exponent) {
     number_t *this = (number_t*)arg;
-    this->factors[this->divisors].prime_i  = prime_i;
+    this->factors[this->divisors].prime_i  = prime_index(prime);
+    this->factors[this->divisors].factor   = prime_value(prime);
     this->factors[this->divisors].exponent = exponent;
     this->divisors++;
 }
