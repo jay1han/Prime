@@ -71,7 +71,10 @@ static int parse(int argc, char **argv) {
         sprintlf(numbers_data, "%-%.dat", from, upto);
     else if (do_numbers == 2)
         sprintlf(numbers_data, "%-%.dxt", from, upto);
-    if (do_numbers) printf(" >%s", numbers_data);
+    if (do_numbers) {
+        unlink(numbers_data);
+        printf(" >%s", numbers_data);
+    }
     else printf(" no numbers");
     if (is_init) printf(" INIT");
     printf("\n");
