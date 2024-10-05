@@ -12,15 +12,16 @@ typedef struct iterator_s {
 } iterator_t;
 
 typedef struct seq_s {
-    unsigned int span, offset;
-    unsigned int *primes;
+    long span, offset;
+    long *primes;
 } seq_t;
 
 static struct {
     int part, offset;
-    unsigned int *primes[1000];
+    long *primes[1000];
     seq_t *sequences;
     int threads;
+    long last_init;
 } self;
 
 #define PART 1000000
@@ -30,43 +31,46 @@ static int selprime(const struct dirent *dir) {
 }
 
 static int namesort(const struct dirent **p_dir1, const struct dirent **p_dir2) {
-    unsigned int num1, num2;
+    long num1, num2;
 
-    sscanf(&(*p_dir1)->d_name[10], "%u", &num1);
-    sscanf(&(*p_dir2)->d_name[10], "%u", &num2);
+    sscanf(&(*p_dir1)->d_name[10], "%lu", &num1);
+    sscanf(&(*p_dir2)->d_name[10], "%lu", &num2);
     if (num1 == num2) return 0;
     else if (num1 < num2) return -1;
     else return 1;
 }
 
 typedef struct init_s {
-    unsigned int first, last;
+    long first, last;
     char filename[64];
 } init_t;
 
-static void ingest(init_t *init) {
+static long ingest(init_t *init) {
     FILE *file;
     void *sequence;
-    unsigned int prime, count;
+    long prime, count, size;
     
-    printf("Ingest %s from %u to %u\n", init->filename, init->first, init->last);
+    printf("Ingest %s from %lu to %lu\n", init->filename, init->first, init->last);
 
     file = fopen(init->filename, "rb");
     
-    count = 0;
-    sequence = seq_alloc(init->last - init->first + 1);
+    size = init->last - init->first + 1;
+    if (size > PART) size = PART;
+    sequence = seq_alloc(size);
     
-    while (fread(&prime, sizeof(unsigned int), 1, file) == 1) {
+    count = 0;
+    while (fread(&prime, sizeof(long), 1, file) == 1) {
         seq_add(sequence, prime);
         if (++count == PART) {
             primes_add_seq(sequence);
-            sequence = seq_alloc(init->last - init->first + 1);
             count = 0;
+            sequence = seq_alloc(size);
         }
     }
     fclose(file);
     
     if (count > 0) primes_add_seq(sequence);
+    return prime;
 }
 
 void primes_init(int threads, int is_init) {
@@ -76,7 +80,7 @@ void primes_init(int threads, int is_init) {
 
     self.part = 0;
     self.offset = 0;
-    self.primes[0] = calloc(sizeof(unsigned int), PART);
+    self.primes[0] = calloc(sizeof(long), PART);
     self.threads = threads;
     self.sequences = calloc(sizeof(seq_t), threads);
 
@@ -89,12 +93,12 @@ void primes_init(int threads, int is_init) {
             for (int i = 0; i < num_files; i++) {
                 struct dirent *p_dir = p_dirlist[i];
                 strcpy(init[i].filename, p_dir->d_name);
-                sscanf(strchr(init[i].filename, '_') + 1, "%u", &init[i].first);
-                sscanf(strchr(init[i].filename, '-') + 1, "%u", &init[i].last);
+                sscanf(strchr(init[i].filename, '_') + 1, "%lu", &init[i].first);
+                sscanf(strchr(init[i].filename, '-') + 1, "%lu", &init[i].last);
             }
             
             for (int i = 0; i < num_files; i++) {
-                ingest(&init[i]);
+                self.last_init = ingest(&init[i]);
             }
             
             free(init);
@@ -103,47 +107,49 @@ void primes_init(int threads, int is_init) {
     }
 }
 
-void primes_add(unsigned int prime) {
+void primes_add(long prime) {
+    if (prime <= self.last_init) return;
+    
     self.primes[self.part][self.offset] = prime;
     if (self.offset == PART - 1) {
-        self.primes[++self.part] = calloc(sizeof(unsigned int), PART);
+        self.primes[++self.part] = calloc(sizeof(long), PART);
         self.offset = 0;
     } else self.offset++;
 }
 
-unsigned int primes_count() {
+long primes_count() {
     return self.part * PART + self.offset;
 }
 
-unsigned int prime_number(unsigned int prime_i) {
+long prime_number(long prime_i) {
     int part = prime_i / PART;
     int offset = prime_i - (part * PART);
     return self.primes[part][offset];
 }
 
-void primes_write(char *filename, unsigned int from, unsigned int upto) {
+void primes_write(char *filename, long from, long upto) {
     FILE *file = fopen(filename, "wb");
     void *iterator = prime_new();
-    unsigned int prime = prime_next(iterator);
+    long prime = prime_next(iterator);
 
     while (prime < from) prime = prime_next(iterator);
     
     while (prime != 0 && prime <= upto) {
-        fwrite(&prime, sizeof(unsigned int), 1, file);
+        fwrite(&prime, sizeof(long), 1, file);
         prime = prime_next(iterator);
     }
     fclose(file);
 }
 
-void primes_print(char *filename, unsigned int from, unsigned int upto) {
+void primes_print(char *filename, long from, long upto) {
     FILE *file = fopen(filename, "w");
     void *iterator = prime_new();
-    unsigned int prime = prime_next(iterator);
+    long prime = prime_next(iterator);
 
     while (prime < from) prime = prime_next(iterator);
     
     while (prime != 0 && prime <= upto) {
-        fprintf(file, "%u\n", prime);
+        fprintf(file, "%lu\n", prime);
         prime = prime_next(iterator);
     }
     fclose(file);
@@ -156,11 +162,11 @@ void *prime_new() {
     return (void*)iterator;
 }
 
-unsigned int prime_next(void *arg) {
+long prime_next(void *arg) {
     iterator_t *this = (iterator_t*)arg;
     if (this->part == self.part && this->offset == self.offset) return 0;
     
-    unsigned int prime = self.primes[this->part][this->offset];
+    long prime = self.primes[this->part][this->offset];
     if (this->offset == PART - 1) {
         this->part++;
         this->offset = 0;
@@ -168,7 +174,7 @@ unsigned int prime_next(void *arg) {
     return prime;
 }
 
-unsigned int prime_index(void *arg) {
+long prime_index(void *arg) {
     iterator_t *this = (iterator_t*)arg;
     return this->part * PART + this->offset - 1;
 }
@@ -177,7 +183,7 @@ void prime_end(void *arg) {
     free(arg);
 }
 
-void *seq_alloc(unsigned int span) {
+void *seq_alloc(long span) {
     seq_t *sequence;
     int i;
 
@@ -190,11 +196,11 @@ void *seq_alloc(unsigned int span) {
     
     sequence->span   = span / 2;
     sequence->offset = 0;
-    sequence->primes = malloc(sizeof(unsigned int) * span / 2);
+    sequence->primes = malloc(sizeof(long) * span / 2);
     return (void*)sequence;
 }
 
-void seq_add(void *arg, unsigned int prime) {
+void seq_add(void *arg, long prime) {
     seq_t *sequence = (seq_t*)arg;
 
     sequence->primes[sequence->offset] = prime;
@@ -204,28 +210,37 @@ void seq_add(void *arg, unsigned int prime) {
 void primes_add_seq(void *arg) {
     seq_t *sequence = (seq_t*)arg;
 
-    if (self.offset + sequence->offset < PART) {
-        memcpy(
-            self.primes[self.part] + self.offset,
-            sequence->primes,
-            sizeof(unsigned int) * sequence->offset
-            );
-        self.offset += sequence->offset;
+    if (sequence->offset == 0) return;
+    
+    if (sequence->primes[0] < self.last_init) {
+        // Must copy one by one
+        
     } else {
-        unsigned int part = PART - self.offset;
-        memcpy(
-            self.primes[self.part] + self.offset,
-            sequence->primes,
-            sizeof(unsigned int) * part
-            );
-        self.part++;
-        self.primes[self.part] = calloc(sizeof(unsigned int), PART);
-        self.offset = sequence->offset - part;
-        memcpy(
-            self.primes[self.part],
-            &sequence->primes[part],
-            sizeof(unsigned int) * self.offset
-            );
+
+        if (self.offset + sequence->offset < PART) {
+            memcpy(
+                self.primes[self.part] + self.offset,
+                sequence->primes,
+                sizeof(long) * sequence->offset
+                );
+            self.offset += sequence->offset;
+            
+        } else {
+            long part = PART - self.offset;
+            memcpy(
+                self.primes[self.part] + self.offset,
+                sequence->primes,
+                sizeof(long) * part
+                );
+            self.part++;
+            self.primes[self.part] = calloc(sizeof(long), PART);
+            self.offset = sequence->offset - part;
+            memcpy(
+                self.primes[self.part],
+                &sequence->primes[part],
+                sizeof(long) * self.offset
+                );
+        }
     }
     
     sequence->primes = NULL;

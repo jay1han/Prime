@@ -8,24 +8,24 @@ void primes_init(int threads, int is_init);
 
 // Add a number to the sequence
 void primes_add(
-    unsigned int prime   // prime number to add
+    long prime   // prime number to add
     );
 
 // Returns the number of primes so far
-unsigned int primes_count();
+long primes_count();
 
 // Return the prime number for this index
-unsigned int prime_number(unsigned int prime_i);
+long prime_number(long prime_i);
 
 // Allocate a sequence of primes
 void *seq_alloc(
-    unsigned int span
+    long span
     );
 
 // Add a prime to sequence
 void seq_add(
     void *arg,
-    unsigned int prime
+    long prime
     );
 
 // Return the sequence to the master list
@@ -36,15 +36,15 @@ void primes_add_seq(
 // Write to file
 void primes_write(
     char *filename,
-    unsigned int from,
-    unsigned int upto
+    long from,
+    long upto
     );
 
 // Write to file
 void primes_print(
     char *filename,
-    unsigned int from,
-    unsigned int upto
+    long from,
+    long upto
     );
 
 // Allocate an iterator
@@ -52,13 +52,13 @@ void *prime_new(
     );                   // returns an iterator object
 
 // Iterate
-unsigned int prime_next(
+long prime_next(
     void *iterator
     );                   // returns the next prime or 0 if no more
                          // release the iterator automatically
 
 // Return the index of this prime
-unsigned int prime_index(void *iterator);
+long prime_index(void *iterator);
 
 // Release the iterator
 void prime_end(

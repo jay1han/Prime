@@ -6,7 +6,7 @@
 
 typedef struct factor_s {
     int prime_i;
-    unsigned int factor;
+    long factor;
     int exponent;
 } factor_t;
 
@@ -17,24 +17,24 @@ typedef struct number_s {
 
 static struct {
     number_t *numbers;
-    unsigned int first, last;
+    long first, last;
 } self;
 
-static int pack(unsigned int number, unsigned char *bytes);
-static int unpack(unsigned char *bytes, unsigned int *value);
+static int pack(long number, unsigned char *bytes);
+static int unpack(unsigned char *bytes, long *value);
 
-void numbers_init(unsigned int first, unsigned int last) {
+void numbers_init(long first, long last) {
     self.first   = first;
     self.last    = last;
     self.numbers = calloc(sizeof(number_t), last - first + 1);
 }
 
 void numbers_write(char *filename) {
-    unsigned int first = self.first;
+    long first = self.first;
     FILE *file = fopen(filename, "ab");
     unsigned char bytes[10];
 
-    for (unsigned int index = 0; index <= self.last - self.first; index++) {
+    for (long index = 0; index <= self.last - self.first; index++) {
         fwrite(&self.numbers[index].divisors, 1, 1, file);
         for (int divisor = 0; divisor < self.numbers[index].divisors; divisor++) {
             if (self.numbers[index].factors[divisor].prime_i == -1) {
@@ -51,20 +51,20 @@ void numbers_write(char *filename) {
 }
 
 void numbers_print(char *filename) {
-    unsigned int first = self.first;
+    long first = self.first;
     FILE *file = fopen(filename, "a");
 
-    for (unsigned int index = 0; index <= self.last - self.first; index++) {
+    for (long index = 0; index <= self.last - self.first; index++) {
         if (self.numbers[index].divisors == 0)
-            fprintf(file, "%uP\n", self.first + index);
+            fprintf(file, "%luP\n", self.first + index);
         else {
-            fprintf(file, "%u:", self.first + index);
+            fprintf(file, "%lu:", self.first + index);
             for (int divisor = 0; divisor < self.numbers[index].divisors; divisor++) {
                 if (self.numbers[index].factors[divisor].prime_i == -1) 
-                    fprintf(file, " %u",
+                    fprintf(file, " %lu",
                             self.numbers[index].factors[divisor].factor);
                 else
-                    fprintf(file, " %u",
+                    fprintf(file, " %lu",
                             prime_number(self.numbers[index].factors[divisor].prime_i));
                 fprintf(file, "^%d",
                         self.numbers[index].factors[divisor].exponent);
@@ -81,7 +81,7 @@ void numbers_close() {
     self.numbers = NULL;
 }
 
-void *number_new(unsigned int number) {
+void *number_new(long number) {
     if (self.last == 0 || number < self.first || number > self.last) return NULL;
     number_t *this = &self.numbers[number - self.first];
     this->divisors = 0;
@@ -95,7 +95,7 @@ void number_addprime(void *arg, int prime_i, int exponent) {
     this->divisors++;
 }
 
-void number_addfactor(void *arg, unsigned int factor, int exponent) {
+void number_addfactor(void *arg, long factor, int exponent) {
     number_t *this = (number_t*)arg;
     this->factors[this->divisors].prime_i  = -1;
     this->factors[this->divisors].factor   = factor;
@@ -106,46 +106,77 @@ void number_addfactor(void *arg, unsigned int factor, int exponent) {
 void number_done(void *arg) {
 }
 
-static int pack(unsigned int number, unsigned char *bytes) {
+static int pack(long number, unsigned char *bytes) {
     int count = 0;
 
-    if (number < ((unsigned int)1 << 7)) {
+    if (number < ((long)1 << 7)) {
         // 1 to 7 bits
         count = 1;
         bytes[0] = number;
-    } else if (number < ((unsigned int)1 << 14)) {
+    } else if (number < ((long)1 << 14)) {
         // 8 to 14 bits
         count = 2;
         bytes[0] = (number >> 8) | 0x80;
         bytes[1] = number & 0xFF;
-    } else if (number < ((unsigned int)1 << 21)) {
+    } else if (number < ((long)1 << 21)) {
         // 15 to 21 bits
         count = 3;
         bytes[0] = (number >> 16) | 0xC0;
         bytes[1] = (number >> 8) & 0xFF;
         bytes[2] = number & 0xFF;
-    } else if (number < ((unsigned int)1 << 28)) {
+    } else if (number < ((long)1 << 28)) {
         // 22 to 28 bits
         count = 4;
         bytes[0] = (number >> 24) | 0xE0;
         bytes[1] = (number >> 16) & 0xFF;
         bytes[2] = (number >> 8) & 0xFF;
         bytes[3] = number & 0xFF;
-    } else {
-        // 32 bits
+    } else if (number < ((long)1 << 35)) {
+        // 29 to 35 bits
         count = 5;
-        bytes[0] = 0xF0;
+        bytes[0] = (number >> 32) | 0xF0;
         bytes[1] = (number >> 24) & 0xFF;
         bytes[2] = (number >> 16) & 0xFF;
         bytes[3] = (number >> 8) & 0xFF;
         bytes[4] = number & 0xFF;
+    } else if (number < ((long)1 << 42)) {
+        // 36 to 42 bits
+        count = 6;
+        bytes[0] = (number >> 40) | 0xF8;
+        bytes[1] = (number >> 32) & 0xFF;
+        bytes[2] = (number >> 24) & 0xFF;
+        bytes[3] = (number >> 16) & 0xFF;
+        bytes[4] = (number >> 8) & 0xFF;
+        bytes[5] = number & 0xFF;
+    } else if (number < ((long)1 << 49)) {
+        // 43 to 49 bits
+        count = 7;
+        bytes[0] = (number >> 48) | 0xFC;
+        bytes[1] = (number >> 40) & 0xFF;
+        bytes[2] = (number >> 32) & 0xFF;
+        bytes[3] = (number >> 24) & 0xFF;
+        bytes[4] = (number >> 16) & 0xFF;
+        bytes[5] = (number >> 8) & 0xFF;
+        bytes[6] = number & 0xFF;
+    } else {
+        // 50 to 64 bits
+        count = 9;
+        bytes[0] = 0xFE;
+        bytes[1] = (number >> 56) & 0xFF;
+        bytes[2] = (number >> 48) & 0xFF;
+        bytes[3] = (number >> 40) & 0xFF;
+        bytes[4] = (number >> 32) & 0xFF;
+        bytes[5] = (number >> 24) & 0xFF;
+        bytes[6] = (number >> 16) & 0xFF;
+        bytes[7] = (number >> 8) & 0xFF;
+        bytes[8] = number & 0xFF;
     }
 
     return count;
 }
 
-static int unpack(unsigned char *bytes, unsigned int *value) {
-    unsigned int number;
+static int unpack(unsigned char *bytes, long *value) {
+    long number;
     int count = 0;
 
     if (bytes[0] & 0x80 == 0) {
@@ -154,20 +185,32 @@ static int unpack(unsigned char *bytes, unsigned int *value) {
         count = 1;
     } else if (bytes[0] & 0x40 == 0) {
         // Two bytes, 6 + 8 = 14 bits
-        number = bytes[1] | ((bytes[0] & 0x3F) << 8);
+        number = bytes[1] | ((long)(bytes[0] & 0x3F) << 8);
         count = 2;
     } else if (bytes[0] & 0x20 == 0) {
         // Three bytes, 5 + 8 + 8 = 21 bits
-        number = bytes[2] | (bytes[1] << 8) | ((bytes[0] & 0x1F) << 16);
+        number = bytes[2] | ((long)bytes[1] << 8) | ((long)(bytes[0] & 0x1F) << 16);
         count = 3;
     } else if (bytes[0] & 0x10 == 0) {
-        // Four bytes, 4 + 8 + 8 + 8 = 29 bits
-        number = bytes[3] | (bytes[2] << 8) | (bytes[1] << 16) | ((bytes[0] & 0x0F) << 24);
+        // Four bytes, 4 + 8 + 8 + 8 = 28 bits
+        number = bytes[3] | ((long)bytes[2] << 8) | ((long)bytes[1] << 16) | (((long)bytes[0] & 0x0F) << 24);
         count = 4;
-    } else {
-        // Five bytes, 32 bits
-        number = bytes[4] | (bytes[3] << 8) | (bytes[2] << 16) | (bytes[1] << 24);
+    } else if (bytes[0] & 0x08 == 0) {
+        // 5 bytes, 3 + 4 * 8 = 35 bits
+        number = bytes[4] | ((long)bytes[3] << 8) | ((long)bytes[2] << 16) | ((long)bytes[1] << 24) | (((long)bytes[0] & 0x07) << 32);
         count = 5;
+    } else if (bytes[0] & 0x04 == 0) {
+        // 6 bytes, 2 + 5 * 8 = 42 bits
+        number = bytes[5] | ((long)bytes[4] << 8) | ((long)bytes[3] << 16) | ((long)bytes[2] << 24) | ((long)bytes[1] << 32) | (((long)bytes[0] & 0x03) << 40);
+        count = 6;
+    } else if (bytes[0] & 0x04 == 0) {
+        // 7 bytes, 1 + 6 * 8 = 49 bits
+        number = bytes[6] | ((long)bytes[5] << 8) | ((long)bytes[4] << 16) | ((long)bytes[3] << 24) | ((long)bytes[2] << 32) | ((long)bytes[1] << 40) | (((long)bytes[0] & 0x01) << 48);
+        count = 7;
+    } else {
+        // 9 bytes, 64 bits
+        number = bytes[8] | ((long)bytes[7] << 8) | ((long)bytes[6] << 16) | ((long)bytes[5] << 24) | ((long)bytes[4] << 32) | ((long)bytes[3] << 40) | ((long)bytes[2] << 48) | ((long)bytes[1] << 56);
+        count = 9;
     }
     
     *value = number;

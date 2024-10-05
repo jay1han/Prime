@@ -5,8 +5,8 @@
 
 // Inialize the numbers list
 void numbers_init(
-    unsigned int first,  // the first number in this list
-    unsigned int last    // the last number in this list
+    long first,  // the first number in this list
+    long last    // the last number in this list
     );
 
 // After all numbers in this iteration have been computed,
@@ -25,7 +25,7 @@ void numbers_close();
 
 // Allocate a number object
 void *number_new(
-    unsigned int number  // the number
+    long number  // the number
     );                   // returns a number object
 
 // With this number object,
@@ -44,7 +44,7 @@ void number_addprime(
 // Add an arbitrary factor to the number
 void number_addfactor(
     void *number,
-    unsigned int factor,
+    long factor,
     int exponent
     );
 

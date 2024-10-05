@@ -4,11 +4,11 @@
 #include "number.h"
 #include "prime.h"
 
-void decomp(unsigned int original, void *sequence, int do_numbers) {
-    unsigned int remainder = original;
+void decomp(long original, void *sequence, int do_numbers) {
+    long remainder = original;
     void *number;
     void *prime = prime_new();
-    unsigned int factor = prime_next(prime);
+    long factor = prime_next(prime);
 
     if (do_numbers) number = number_new(original);
     while (factor * factor <= remainder) {
@@ -40,9 +40,9 @@ void decomp(unsigned int original, void *sequence, int do_numbers) {
 }
 
 typedef struct worker_s {
-    unsigned int first;
-    unsigned int last;
-    unsigned int show;
+    long first;
+    long last;
+    long show;
     pthread_t thread;
     void *sequence;
     int do_numbers;
@@ -50,17 +50,17 @@ typedef struct worker_s {
 
 static void *work(void *arg) {
     worker_t *worker = (worker_t*)arg;
-    unsigned int number;
+    long number;
     
     for (number = worker->first; number <= worker->last; number++) {
         if (worker->show != 0 && (number % worker->show) == 0)
-            printf("%u\n", number);
+            printf("%lu\n", number);
         decomp(number, worker->sequence, worker->do_numbers);
     }
     return arg;
 }
 
-void *worker_start(unsigned int first, unsigned int last, unsigned int show, int do_numbers) {
+void *worker_start(long first, long last, long show, int do_numbers) {
     worker_t *worker;
 
     worker = malloc(sizeof(worker_t));
