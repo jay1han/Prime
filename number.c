@@ -232,6 +232,8 @@ void sprintlf(char *output, char *fmt, ...) {
         } else *(target++) = *source;
     }
     va_end(args);
+    
+    *target = 0;
 }
 
 void printlf(char *fmt, ...) {

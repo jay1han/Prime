@@ -27,16 +27,24 @@ static struct {
 } self;
 
 #define PART 1000000
+#define DATA "Data"
+#define LIST "List"
 
-static int selprime(const struct dirent *dir) {
-    return strncmp(dir->d_name, "Data", 4) == 0;
+static int seldata(const struct dirent *dir) {
+    return strncmp(dir->d_name, DATA, 4) == 0;
+}
+
+static int seldata2(const struct dirent *dir) {
+    return
+        (strncmp(dir->d_name, DATA, 4) == 0) ||
+        (strncmp(dir->d_name, LIST, 4) == 0);
 }
 
 static int namesort(const struct dirent **p_dir1, const struct dirent **p_dir2) {
     long num1, num2;
 
-    sscanl((char*)&(*p_dir1)->d_name[10], &num1);
-    sscanl((char*)&(*p_dir2)->d_name[10], &num2);
+    sscanl((char*)&(*p_dir1)->d_name[5], &num1);
+    sscanl((char*)&(*p_dir2)->d_name[5], &num2);
     if (num1 == num2) return 0;
     else if (num1 < num2) return -1;
     else return 1;
@@ -88,7 +96,7 @@ void primes_init(int threads, int is_init) {
         struct dirent **p_dirlist, *p_dir;
         init_t *init;
         
-        num_files = scandir(".", &p_dirlist, selprime, namesort);
+        num_files = scandir(".", &p_dirlist, seldata, namesort);
         
         if (num_files > 0) {
             init = calloc(sizeof(init_t), num_files);
@@ -128,10 +136,10 @@ long primes_last() {
     return self.last_init;
 }
 
-void primes_write(char *datafile, long from, long upto, char *listfile) {
+void primes_write(long upto, int do_list) {
     if (upto > self.last_init) {
         struct dirent **p_dirlist, *p_dir;
-        int num_files = scandir(".", &p_dirlist, selprime, namesort);
+        int num_files = scandir(".", &p_dirlist, seldata2, NULL);
         
         for (int i = 0; i < num_files; i++) {
             struct dirent *p_dir = p_dirlist[i];
@@ -141,13 +149,21 @@ void primes_write(char *datafile, long from, long upto, char *listfile) {
     
         void *iterator = prime_new();
         long prime = prime_next(iterator);
+        
+        char datafile[64];
+        sprintf(datafile, "%s.", DATA);
+        sprintlf(datafile, "2-%.dat", upto);
         FILE *data = fopen(datafile, "wb");
+        
+        char listfile[64];
+        sprintf(listfile, "%s.", LIST);
+        sprintlf(listfile, "2-%.lst", upto);
         FILE *list = NULL;
-        if (listfile[0] != 0) list = fopen(listfile, "w");
-    
+        if (do_list) list = fopen(listfile, "w");
+        
         while (prime != 0 && prime <= upto) {
             fwrite(&prime, sizeof(long), 1, data);
-            if (list != NULL) fprintf(list, "%lu\n", prime);
+            if (do_list) fprintf(list, "%lu\n", prime);
             prime = prime_next(iterator);
         }
         fclose(data);

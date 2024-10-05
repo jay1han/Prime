@@ -12,13 +12,11 @@
 static long from = 2;
 static long upto = 1000000;
 static long span = 10000;
-static char primes_data[64] = "Data.";
-static char primes_list[64] = "List.";
 static char numbers_data[64] = "Numbers.";
 
 static int cores = 8;
 static long show = 0;
-static int print_primes = 1;
+static int do_list = 1;
 static int do_numbers = 0;
 static int dont_run = 0;
 static int is_init = 0;
@@ -32,7 +30,7 @@ static int parse(int argc, char **argv) {
         else if (argv[i][0] == '-') sscanf(&argv[i][1], "%lu", &from);
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 'a') do_numbers = 1;
-        else if (argv[i][0] == 'n') print_primes = 0;
+        else if (argv[i][0] == 'n') do_list = 0;
         else if (argv[i][0] == 'p') sscanf(&argv[i][1], "%lu", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
         else dont_run = 1;
@@ -46,8 +44,6 @@ static int parse(int argc, char **argv) {
         span = upto / (turns * cores);
     }
 
-    sprintlf(primes_data, "%-%.dat", from, upto);
-    sprintlf(primes_list, "%-%.lst", from, upto);
     sprintlf(numbers_data, "%-%.dat", from, upto);
     unlink(numbers_data);
 
@@ -68,8 +64,8 @@ static int parse(int argc, char **argv) {
     printf(" on %d threads", cores);
     if (show == 0) printf(" quietly");
     else printlf(" show %'s", show);
-    printf(" >%s", primes_data);
-    if (print_primes) printf(" >%s", primes_list);
+    printf(" >Data");
+    if (do_list) printf(" >List");
     if (do_numbers) printf(" >%s", numbers_data);
     else printf(" no numbers");
     if (is_init) printf(" INIT");
@@ -140,8 +136,8 @@ int main (int argc, char **argv) {
         numbers_close();
     }
 
-    printf("Total "); printl(primes_count()); printf(" primes\n");
-    primes_write(primes_data, from, upto, print_primes ? primes_list : "");
+    printlf("Total % primes\n", primes_count());
+    primes_write(upto, do_list);
     
     return 0;
 }

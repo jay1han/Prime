@@ -35,10 +35,8 @@ void primes_add_seq(
 
 // Write to file
 void primes_write(
-    char *datafile,
-    long from,
     long upto,
-    char *listfile;
+    int do_list;
     );
 
 // Allocate an iterator
