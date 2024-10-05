@@ -11,7 +11,7 @@
 
 static long from = 2;
 static long upto = 1e6;
-static long span = 1e4;
+static long span = 1e5;
 static char numbers_data[64] = "Numbers.";
 
 static int cores = 8;
@@ -29,9 +29,9 @@ static int parse(int argc, char **argv) {
         else if (argv[i][0] == '+') sscanf(&argv[i][1], "%lu", &upto);
         else if (argv[i][0] == '-') sscanf(&argv[i][1], "%lu", &from);
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
-        else if (argv[i][0] == 'a') do_numbers = 1;
-        else if (argv[i][0] == 'n') do_list = 0;
-        else if (argv[i][0] == 'p') sscanf(&argv[i][1], "%lu", &show);
+        else if (argv[i][0] == 'n') do_numbers = 1;
+        else if (argv[i][0] == 'p') do_list = 0;
+        else if (argv[i][0] == 'v') sscanf(&argv[i][1], "%lu", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
         else dont_run = 1;
     }
@@ -55,9 +55,9 @@ static int parse(int argc, char **argv) {
         printf("\t-#\tstart from #\n");
         printf("\t+#\tup to and including #\n");
         printf("\tt#\tthreads\n");
-        printf("\ta\twrite numbers.dat\n");
-        printf("\tn\tdo not print primes.lst\n");
-        printf("\tp#\tshow progress every #\n");
+        printf("\tn\twrite numbers.dat\n");
+        printf("\tp\tdo not print primes.lst\n");
+        printf("\tv#\tshow progress every #\n");
         printf("\ts#\tspan of computation\n");
         printf("\t?\tdon't run, show parameters\n");
     }

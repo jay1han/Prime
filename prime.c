@@ -39,10 +39,8 @@ static int seldata(const struct dirent *dir) {
 }
 
 // Selects files starting with "Data" or "List"
-static int seldata2(const struct dirent *dir) {
-    return
-        (strncmp(dir->d_name, DATA, 4) == 0) ||
-        (strncmp(dir->d_name, LIST, 4) == 0);
+static int sellist(const struct dirent *dir) {
+    return strncmp(dir->d_name, LIST, 4) == 0;
 }
 
 // Compare filenames according to first number after "Data"
@@ -56,40 +54,18 @@ static int namesort(const struct dirent **p_dir1, const struct dirent **p_dir2) 
     else return 1;
 }
 
-// Ingest a file
-static void ingest(char *filename) {
-    FILE *file;
-    void *sequence;
-    long prime;
-    int count;
-    long first, last;
-    sscanl(strchr(filename, '.') + 1, &first);
-    sscanl(strchr(filename, '-') + 1, &last);
+static void primes_scan(unsigned char *bytes, int size) {
+    long step;
 
-    printf("Ingest %s from ", filename);
-    printlf("% to %\n", first, last);
-
-    file = fopen(filename, "rb");
-    
-    sequence = seq_alloc(PART);
-    
-    count = 0;
-    while (fread(&prime, sizeof(long), 1, file) == 1) {
-        if (prime <= self.last) break;
-        
-        seq_add(sequence, prime);
-        if (++count == PART) {
-            primes_add_seq(sequence);
-            count = 0;
-            sequence = seq_alloc(PART);
-        }
+    for (int offset = 0; offset < size; ) {
+        offset += flex_open(&bytes[offset], &step);
+        if (step == 0) return;
+        self.last += step;
+        self.count++;
     }
-    fclose(file);
-    
-    if (count > 0) primes_add_seq(sequence);
 }
 
-// Scan all files starting with "Data" and ingest them in order
+// Find file starting with "Data" and ingest it
 void primes_init(int threads, int is_init) {
     self.part = 0;
     self.offset = 0;
@@ -101,21 +77,42 @@ void primes_init(int threads, int is_init) {
 
     if (!is_init) {
         int num_files;
-        struct dirent **p_dirlist, *p_dir;
+        struct dirent **p_dirlist;
         
         num_files = scandir(".", &p_dirlist, seldata, namesort);
-        
-        if (num_files > 0) {
-            for (int i = 0; i < num_files; i++) {
-                struct dirent *p_dir = p_dirlist[i];
-                ingest(p_dir->d_name);
-            }
-            
-            free(p_dirlist);
+        if (num_files > 1) {
+            printf("Too many Data files\n");
+            exit(0);
         }
 
-        printf("Ingested %d files", num_files);
-        printlf(" % primes, last=%", primes_count(), primes_last());
+        if (num_files == 0) {
+            printf("No Data file\n");
+            exit(0);
+        }
+        
+        char *filename = p_dirlist[0]->d_name;
+        FILE *file;
+        long first, last;
+        sscanl(strchr(filename, '.') + 1, &first);
+        sscanl(strchr(filename, '-') + 1, &last);
+
+        printf("Ingest %s from ", filename);
+        printlf("% to %\n", first, last);
+
+        file = fopen(filename, "rb");
+
+        while ((self.offset = fread(self.bytes[self.part], 1, PART, file)) == PART) {
+            self.bytes[++self.part] = malloc(PART);
+        }
+        fclose(file);
+        
+        free(p_dirlist);
+
+        for (int part = 0; part < self.part; part++)
+            primes_scan(self.bytes[part], PART);
+        primes_scan(self.bytes[self.part], self.offset);
+
+        printlf("Ingested % primes, last=%", self.count, self.last);
         printpf(" RAM usage %\n", primes_size());
     }
 }
@@ -126,12 +123,51 @@ void primes_add(long prime) {
 
     self.offset += flex_fold(prime - self.last, &self.bytes[self.part][self.offset]);
     self.count++;
-    if (self.offset >= PART - 9) {
+    if (self.offset > PART - 10) {
+        self.bytes[self.part][self.offset] = 0;
         self.bytes[++self.part] = malloc(PART);
         self.offset = 0;
     }
     
     self.last = prime;
+}
+
+// Create a new iterator
+void *prime_new() {
+    iterator_t *iterator = (iterator_t*)malloc(sizeof(iterator_t));
+    iterator->offset = 0;
+    iterator->part = 0;
+    iterator->cumul = 0;
+    return (void*)iterator;
+}
+
+// Return the next prime in list, 0 if none
+inline long prime_next(void *arg, long *step) {
+    iterator_t *this = (iterator_t*)arg;
+    if (this->cumul > 1 && this->part == self.part && this->offset == self.offset)
+        return 0;
+
+    long flex;
+    this->offset += flex_open(&self.bytes[this->part][this->offset], &flex);
+    this->cumul += flex;
+    if (this->offset > PART - 10) {
+        this->part++;
+        this->offset = 0;
+    }
+
+    if (step != NULL) *step = flex;
+    return this->cumul;
+}
+
+// Return the absolute index of current prime
+inline long prime_index(void *arg) {
+    iterator_t *this = (iterator_t*)arg;
+    return this->part * PART + this->offset - 1;
+}
+
+// Release iterator
+void prime_end(void *arg) {
+    free(arg);
 }
 
 long primes_count() {
@@ -149,8 +185,9 @@ long primes_size() {
 // Write the full list of primes, erasing the previous files
 void primes_write(long upto, int do_list) {
     struct dirent **p_dirlist, *p_dir;
-    int num_files = scandir(".", &p_dirlist, seldata2, NULL);
-        
+    int num_files;
+
+    num_files = scandir(".", &p_dirlist, seldata, NULL);
     for (int i = 0; i < num_files; i++) {
         struct dirent *p_dir = p_dirlist[i];
         unlink(p_dir->d_name);
@@ -162,59 +199,36 @@ void primes_write(long upto, int do_list) {
     sprintlf(datafile, "2-%.dat", upto);
     FILE *data = fopen(datafile, "wb");
         
-    char listfile[64];
-    sprintf(listfile, "%s.", LIST);
-    sprintlf(listfile, "2-%.lst", upto);
-    FILE *list = NULL;
-    if (do_list) list = fopen(listfile, "w");
-        
-    void *iterator = prime_new();
-    long prime = prime_next(iterator);
-        
-    while (prime != 0) {
-        fwrite(&prime, sizeof(long), 1, data);
-        if (do_list) fprintf(list, "%lu\n", prime);
-        prime = prime_next(iterator);
-    }
-    
+    for (int part = 0; part < self.part; part++)
+        fwrite(self.bytes[part], 1, PART, data);
+    fwrite(self.bytes[self.part], 1, self.offset, data);
     fclose(data);
-}
-
-// Create a new iterator
-void *prime_new() {
-    iterator_t *iterator = (iterator_t*)malloc(sizeof(iterator_t));
-    iterator->offset = 0;
-    iterator->part = 0;
-    iterator->cumul = 0;
-    return (void*)iterator;
-}
-
-// Return the next prime in list, 0 if none
-inline long prime_next(void *arg) {
-    iterator_t *this = (iterator_t*)arg;
-    if (this->cumul > 1 && this->part == self.part && this->offset == self.offset)
-        return 0;
-
-    long step;
-    this->offset += flex_open(&self.bytes[this->part][this->offset], &step);
-    this->cumul += step;
-    if (this->offset >= PART - 9) {
-        this->part++;
-        this->offset = 0;
-    }
     
-    return this->cumul;
-}
+    if (do_list) {
+        
+        num_files = scandir(".", &p_dirlist, sellist, NULL);
+        for (int i = 0; i < num_files; i++) {
+            struct dirent *p_dir = p_dirlist[i];
+            unlink(p_dir->d_name);
+        }
+        if (num_files > 0) free(p_dirlist);
+        
+        char listfile[64];
+        sprintf(listfile, "%s.", LIST);
+        sprintlf(listfile, "2-%.lst", upto);
+        FILE *list = fopen(listfile, "w");
 
-// Return the absolute index of current prime
-inline long prime_index(void *arg) {
-    iterator_t *this = (iterator_t*)arg;
-    return this->part * PART + this->offset - 1;
-}
-
-// Release iterator
-void prime_end(void *arg) {
-    free(arg);
+        void *iterator = prime_new();
+        long prime = prime_next(iterator, NULL);
+        unsigned char bytes[10];
+        
+        while (prime != 0) {
+            fprintf(list, "%lu\n", prime);
+            prime = prime_next(iterator, NULL);
+        }
+        
+        fclose(list);
+    }
 }
 
 // Return a sequence

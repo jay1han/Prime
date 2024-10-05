@@ -8,7 +8,7 @@ void decomp(long original, void *sequence, int do_numbers) {
     long remainder = original;
     void *number;
     void *prime = prime_new();
-    long factor = prime_next(prime);
+    long factor = prime_next(prime, NULL);
 
     if (do_numbers) number = number_new(original);
     while (factor * factor <= remainder) {
@@ -25,7 +25,7 @@ void decomp(long original, void *sequence, int do_numbers) {
                 break;
             }
         }
-        factor = prime_next(prime);
+        factor = prime_next(prime, NULL);
         if (factor == 0) break;
     }
     prime_end(prime);

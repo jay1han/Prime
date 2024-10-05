@@ -48,9 +48,9 @@ void *prime_new(
 
 // Iterate
 long prime_next(
-    void *iterator
+    void *iterator,
+    long *step           // step from previous prime
     );                   // returns the next prime or 0 if no more
-                         // release the iterator automatically
 
 // Return the index of this prime
 long prime_index(void *iterator);
