@@ -31,6 +31,13 @@ void number_isprime(
     void *number
     );
 
+// Add a known prime to the number
+void number_addprime(
+    void *number,
+    long prime_i,
+    unsigned char exponent
+    );
+
 // Add an arbitrary factor to the number
 void number_addfactor(
     void *number,

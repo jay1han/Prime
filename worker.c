@@ -19,7 +19,7 @@ void decomp(long original, void *sequence, int do_numbers) {
                     exponent++;
                     remainder /= factor;
                 } while ((remainder % factor) == 0);
-                number_addfactor(number, factor, exponent);
+                number_addprime(number, prime_index(prime), exponent);
             } else {
                 remainder = 0;
                 break;
@@ -28,14 +28,18 @@ void decomp(long original, void *sequence, int do_numbers) {
         factor = prime_next(prime, NULL);
         if (factor == 0) break;
     }
-    prime_end(prime);
     
     if (remainder == original) {
         if (sequence == NULL) primes_add(original);
         else seq_add(sequence, original);
     }
-    else if (remainder > 1) number_addfactor(number, remainder, 1);
+    else if (remainder > 1) {
+        long prime_i = prime_find(prime, remainder);
+        if (prime_i > 0) number_addprime(number, prime_i, 1);
+        else number_addfactor(number, remainder, 1);
+    }
     
+    prime_end(prime);
     if (do_numbers) number_done(number);
 }
 

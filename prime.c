@@ -11,7 +11,8 @@
 // The list is the data, and callers use an iterator to go through the list
 
 typedef struct iterator_s {
-    int part, offset;             // Index to self.bytes[part][offset]
+    int part, offset;             // Pointer to next self.bytes[part][offset]
+    long index;                    // Index of current prime (start with index 1 = number 2)
     long cumul;                   // Current prime
 } iterator_t;
 
@@ -136,16 +137,16 @@ void primes_add(long prime) {
 void *prime_new() {
     iterator_t *iterator = (iterator_t*)malloc(sizeof(iterator_t));
     iterator->offset = 0;
-    iterator->part = 0;
-    iterator->cumul = 0;
+    iterator->part   = 0;
+    iterator->index  = 0;
+    iterator->cumul  = 0;
     return (void*)iterator;
 }
 
 // Return the next prime in list, 0 if none
 inline long prime_next(void *arg, long *step) {
     iterator_t *this = (iterator_t*)arg;
-    if (this->cumul > 1 && this->part == self.part && this->offset == self.offset)
-        return 0;
+    if (this->index >= self.count) return 0;
 
     long flex;
     this->offset += flex_open(&self.bytes[this->part][this->offset], &flex);
@@ -154,15 +155,37 @@ inline long prime_next(void *arg, long *step) {
         this->part++;
         this->offset = 0;
     }
+    this->index++;
 
     if (step != NULL) *step = flex;
     return this->cumul;
 }
 
-// Return the absolute index of current prime
+// Return the byte index of current prime
 inline long prime_index(void *arg) {
     iterator_t *this = (iterator_t*)arg;
-    return this->part * PART + this->offset - 1;
+    return this->index;
+}
+
+inline long prime_find(void *arg, long number) {
+    iterator_t *this = (iterator_t*)arg;
+
+    if (number > self.last) return 0;
+    while (this->cumul < number) {
+        if (this->index >= self.count) return 0;
+        
+        long flex;
+        this->offset += flex_open(&self.bytes[this->part][this->offset], &flex);
+        this->cumul += flex;
+        if (this->offset > PART - 10) {
+            this->part++;
+            this->offset = 0;
+        }
+        this->index++;
+    }
+
+    if (this->cumul == number) return this->index;
+    return 0;
 }
 
 // Release iterator
@@ -170,15 +193,15 @@ void prime_end(void *arg) {
     free(arg);
 }
 
-long primes_count() {
+inline long primes_count() {
     return self.count;
 }
 
-long primes_last() {
+inline long primes_last() {
     return self.last;
 }
 
-long primes_size() {
+inline long primes_size() {
     return (long)PART * (self.part + 1);
 }
 
