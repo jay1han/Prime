@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h>
 #include "prime.h"
 #include "number.h"
 
@@ -28,7 +29,7 @@ static struct {
 #define PART 1000000
 
 static int selprime(const struct dirent *dir) {
-    return strncmp(dir->d_name, "PrimeData", 9) == 0;
+    return strncmp(dir->d_name, "Data", 4) == 0;
 }
 
 static int namesort(const struct dirent **p_dir1, const struct dirent **p_dir2) {
@@ -50,7 +51,7 @@ static long ingest(init_t *init) {
     FILE *file;
     void *sequence;
     long prime, count, size;
-    
+
     printf("Ingest %s from ", init->filename);
     printlf("% to %\n", init->first, init->last);
 
@@ -76,10 +77,6 @@ static long ingest(init_t *init) {
 }
 
 void primes_init(int threads, int is_init) {
-    int num_files;
-    struct dirent **p_dirlist, *p_dir;
-    init_t *init;
-
     self.part = 0;
     self.offset = 0;
     self.primes[0] = calloc(sizeof(long), PART);
@@ -87,6 +84,10 @@ void primes_init(int threads, int is_init) {
     self.sequences = calloc(sizeof(seq_t), threads);
 
     if (!is_init) {
+        int num_files;
+        struct dirent **p_dirlist, *p_dir;
+        init_t *init;
+        
         num_files = scandir(".", &p_dirlist, selprime, namesort);
         
         if (num_files > 0) {
@@ -123,32 +124,34 @@ long primes_count() {
     return self.part * PART + self.offset;
 }
 
-void primes_write(char *filename, long from, long upto) {
-    FILE *file = fopen(filename, "wb");
-    void *iterator = prime_new();
-    long prime = prime_next(iterator);
-
-    while (prime < from) prime = prime_next(iterator);
-    
-    while (prime != 0 && prime <= upto) {
-        fwrite(&prime, sizeof(long), 1, file);
-        prime = prime_next(iterator);
-    }
-    fclose(file);
+long primes_last() {
+    return self.last_init;
 }
 
-void primes_print(char *filename, long from, long upto) {
-    FILE *file = fopen(filename, "w");
-    void *iterator = prime_new();
-    long prime = prime_next(iterator);
-
-    while (prime < from) prime = prime_next(iterator);
+void primes_write(char *datafile, long from, long upto, char *listfile) {
+    if (upto > self.last_init) {
+        struct dirent **p_dirlist, *p_dir;
+        int num_files = scandir(".", &p_dirlist, selprime, namesort);
+        
+        for (int i = 0; i < num_files; i++) {
+            struct dirent *p_dir = p_dirlist[i];
+            unlink(p_dir->d_name);
+        }
+        if (num_files > 0) free(p_dirlist);
     
-    while (prime != 0 && prime <= upto) {
-        fprintf(file, "%lu\n", prime);
-        prime = prime_next(iterator);
+        void *iterator = prime_new();
+        long prime = prime_next(iterator);
+        FILE *data = fopen(datafile, "wb");
+        FILE *list = NULL;
+        if (listfile[0] != 0) list = fopen(listfile, "w");
+    
+        while (prime != 0 && prime <= upto) {
+            fwrite(&prime, sizeof(long), 1, data);
+            if (list != NULL) fprintf(list, "%lu\n", prime);
+            prime = prime_next(iterator);
+        }
+        fclose(data);
     }
-    fclose(file);
 }
 
 void *prime_new() {
@@ -158,7 +161,7 @@ void *prime_new() {
     return (void*)iterator;
 }
 
-long prime_next(void *arg) {
+inline long prime_next(void *arg) {
     iterator_t *this = (iterator_t*)arg;
     if (this->part == self.part && this->offset == self.offset) return 0;
     
@@ -170,7 +173,7 @@ long prime_next(void *arg) {
     return prime;
 }
 
-long prime_index(void *arg) {
+inline long prime_index(void *arg) {
     iterator_t *this = (iterator_t*)arg;
     return this->part * PART + this->offset - 1;
 }
@@ -196,7 +199,7 @@ void *seq_alloc(long span) {
     return (void*)sequence;
 }
 
-void seq_add(void *arg, long prime) {
+inline void seq_add(void *arg, long prime) {
     seq_t *sequence = (seq_t*)arg;
 
     sequence->primes[sequence->offset] = prime;

@@ -63,14 +63,14 @@ void *number_new(long number) {
     return (void*)this;
 }
 
-void number_addprime(void *arg, int prime_i, int exponent) {
+inline void number_addprime(void *arg, int prime_i, int exponent) {
     number_t *this = (number_t*)arg;
     this->factors[this->divisors].prime_i  = prime_i;
     this->factors[this->divisors].exponent = exponent;
     this->divisors++;
 }
 
-void number_addfactor(void *arg, long factor, int exponent) {
+inline void number_addfactor(void *arg, long factor, int exponent) {
     number_t *this = (number_t*)arg;
     this->factors[this->divisors].prime_i  = -1;
     this->factors[this->divisors].factor   = factor;
@@ -81,7 +81,7 @@ void number_addfactor(void *arg, long factor, int exponent) {
 void number_done(void *arg) {
 }
 
-static int pack(long number, unsigned char *bytes) {
+inline static int pack(long number, unsigned char *bytes) {
     int count = 0;
 
     if (number < ((long)1 << 7)) {

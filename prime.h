@@ -14,6 +14,9 @@ void primes_add(
 // Returns the number of primes so far
 long primes_count();
 
+// Returns the highest prime after init
+long primes_last();
+
 // Allocate a sequence of primes
 void *seq_alloc(
     long span
@@ -32,16 +35,10 @@ void primes_add_seq(
 
 // Write to file
 void primes_write(
-    char *filename,
+    char *datafile,
     long from,
-    long upto
-    );
-
-// Write to file
-void primes_print(
-    char *filename,
-    long from,
-    long upto
+    long upto,
+    char *listfile;
     );
 
 // Allocate an iterator

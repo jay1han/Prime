@@ -100,7 +100,13 @@ int main (int argc, char **argv) {
         
         if (do_numbers) numbers_write(numbers_data);
         numbers_close();
-    } else next = from;
+    } else {
+        if (upto < primes_last()) {
+            printlf("Already computed % > %\n", primes_last(), upto);
+            exit(0);
+        }
+        next = from;
+    }
     
     while (next <= upto) {
         long first = next;
@@ -135,8 +141,7 @@ int main (int argc, char **argv) {
     }
 
     printf("Total "); printl(primes_count()); printf(" primes\n");
-    primes_write(primes_data, from, upto);
-    if (print_primes) primes_print(primes_list, from, upto);
+    primes_write(primes_data, from, upto, print_primes ? primes_list : "");
     
     return 0;
 }
