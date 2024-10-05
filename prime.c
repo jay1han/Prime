@@ -123,12 +123,6 @@ long primes_count() {
     return self.part * PART + self.offset;
 }
 
-long prime_number(long prime_i) {
-    int part = prime_i / PART;
-    int offset = prime_i - (part * PART);
-    return self.primes[part][offset];
-}
-
 void primes_write(char *filename, long from, long upto) {
     FILE *file = fopen(filename, "wb");
     void *iterator = prime_new();

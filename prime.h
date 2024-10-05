@@ -14,9 +14,6 @@ void primes_add(
 // Returns the number of primes so far
 long primes_count();
 
-// Return the prime number for this index
-long prime_number(long prime_i);
-
 // Allocate a sequence of primes
 void *seq_alloc(
     long span
