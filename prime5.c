@@ -37,7 +37,7 @@ int parse(int argc, char **argv) {
         else if (argv[i][0] == 'a') write_numbers = 1;
         else if (argv[i][0] == 'h') print_numbers = 1;
         else if (argv[i][0] == 'n') print_primes = 0;
-        else if (argv[i][0] == 'p') sscanf(&argv[i][1], "%d", &show);
+        else if (argv[i][0] == 'p') sscanf(&argv[i][1], "%lu", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
         else dont_run = 1;
     }
@@ -71,10 +71,10 @@ int parse(int argc, char **argv) {
         printf("\ts#\tspan of computation\n");
         printf("\t?\tdon't run, show parameters\n");
     }
-    
-    printf("From %lu to %lu in spans of %lu on %d threads", from, upto, span, cores);
+
+    printf("From "); printl(from); printf(" to "); printl(upto); printf(" in spans of "); printl(span); printf(" on %d threads", cores);
     if (show == 0) printf(" quietly");
-    else printf(" show %lu's", show);
+    else {printf(" show "); printl(show); printf("'s");}
     if (!do_numbers) printf(" no numbers");
     printf(" >%s", primes_data);
     if (print_primes) printf(" >%s", primes_list);
@@ -82,7 +82,7 @@ int parse(int argc, char **argv) {
     if (print_numbers) printf(" >%s", numbers_list);
     if (is_init) printf(" INIT");
     printf("\n");
-
+    
     return dont_run;
 }
 
@@ -104,8 +104,7 @@ int main (int argc, char **argv) {
         for (next = 3; next <= span; next++)
             decomp(next, NULL, do_numbers);
     
-        printf("Init %lu..%lu : %lu primes\n",
-               2, span, primes_count());
+        printf("Init 2 .. "); printl(span); printf(" : "); printl(primes_count()); printf(" primes\n");
         
         if (write_numbers) numbers_write(numbers_data);
         if (print_numbers) numbers_print(numbers_list);
@@ -137,16 +136,36 @@ int main (int argc, char **argv) {
             primes_add_seq(sequence[thread]);
         
         long latest = primes_count();
-        printf("Span %lu..%lu on %d threads: %lu primes, total %lu\n",
-               first, next - 1, threads, latest - sofar, latest);
+        printf("Span "); printl(first); printf(" .. "); printl(next - 1), printf(" on %d threads: ", threads);
+	printl(latest - sofar); printf(" primes, total "); printl(latest); printf("\n");
         if (write_numbers) numbers_write(numbers_data);
         if (print_numbers) numbers_print(numbers_list);
         numbers_close();
     }
 
-    printf("Total %lu primes\n", primes_count());
+    printf("Total "); printl(primes_count()); printf(" primes\n");
     primes_write(primes_data, from, upto);
     if (print_primes) primes_print(primes_list, from, upto);
     
     return 0;
+}
+
+void printl(long num) {
+  char temp[32];
+  int length, spaces;
+  
+  sprintf(temp, "%lu", num);
+  length = strlen(temp);
+  spaces = (length - 1) / 3;
+
+  temp[length + spaces] = 0;
+  for (int i = 1; i <= length; i++) {
+    temp[length + spaces - i] = temp[length - i];
+    if (i % 3 == 0) {
+      spaces--;
+      temp[length + spaces - i] = '_';
+    }
+  }
+
+  printf(temp);
 }

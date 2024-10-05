@@ -65,4 +65,6 @@ void prime_end(
     void *iterator
     );
 
+void printl(long num);
+
 #endif

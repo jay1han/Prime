@@ -50,7 +50,11 @@ static long ingest(init_t *init) {
     void *sequence;
     long prime, count, size;
     
-    printf("Ingest %s from %lu to %lu\n", init->filename, init->first, init->last);
+    printf("Ingest %s from ", init->filename);
+    printl(init->first);
+    printf(" to ");
+    printl(init->last);
+    printf("\n");
 
     file = fopen(init->filename, "rb");
     
