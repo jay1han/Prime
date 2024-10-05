@@ -50,11 +50,13 @@ void number_done(
     void *number
     );
 
-// Print a long
+// Print longs
 void printl(long num);
 void printlf(char *fmt, ...);
 int sprintl(char *output, long num);
 void sprintlf(char *output, char *fmt, ...);
+
+// Scan a punctuated long
 void sscanl(char *input, long *value);
 
 #endif
