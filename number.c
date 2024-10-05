@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "number.h"
 #include "prime.h"
 
@@ -44,32 +45,6 @@ void numbers_write(char *filename) {
             else
                 fwrite(bytes, 1, pack(self.numbers[index].factors[divisor].prime_i, bytes), file);
             fwrite(&self.numbers[index].factors[divisor].exponent, 1, 1, file);
-        }
-    }
-    
-    fclose(file);
-}
-
-void numbers_print(char *filename) {
-    long first = self.first;
-    FILE *file = fopen(filename, "a");
-
-    for (long index = 0; index <= self.last - self.first; index++) {
-        if (self.numbers[index].divisors == 0)
-            fprintf(file, "%luP\n", self.first + index);
-        else {
-            fprintf(file, "%lu:", self.first + index);
-            for (int divisor = 0; divisor < self.numbers[index].divisors; divisor++) {
-                if (self.numbers[index].factors[divisor].prime_i == -1) 
-                    fprintf(file, " %lu",
-                            self.numbers[index].factors[divisor].factor);
-                else
-                    fprintf(file, " %lu",
-                            prime_number(self.numbers[index].factors[divisor].prime_i));
-                fprintf(file, "^%d",
-                        self.numbers[index].factors[divisor].exponent);
-            }
-            fprintf(file, "\n");
         }
     }
     
@@ -215,4 +190,76 @@ static int unpack(unsigned char *bytes, long *value) {
     
     *value = number;
     return count;
+}
+
+int sprintl(char *output, long num) {
+    char temp[32];
+    int length, spaces;
+  
+    sprintf(temp, "%lu", num);
+    length = strlen(temp);
+    spaces = (length - 1) / 3;
+
+    temp[length + spaces] = 0;
+    for (int i = 1; i <= length; i++) {
+        temp[length + spaces - i] = temp[length - i];
+        if (i % 3 == 0) {
+            spaces--;
+            temp[length + spaces - i] = '_';
+        }
+    }
+    
+    strcpy(output, temp);
+    return strlen(temp);
+}
+
+void printl(long num) {
+    char temp[32];
+
+    sprintl(temp, num);
+    printf("%s", temp);
+}
+
+void sprintlf(char *output, char *fmt, ...) {
+    va_list(args);
+    char *target = output + strlen(output);
+    char *source;
+
+    va_start(args, fmt);
+    for (source = fmt; *source != 0; source++) {
+        if (*source == '%') {
+            target += sprintl(target, va_arg(args, long));
+        } else *(target++) = *source;
+    }
+    va_end(args);
+}
+
+void printlf(char *fmt, ...) {
+    va_list(args);
+    char *source;
+
+    va_start(args, fmt);
+    for (source = fmt; *source != 0; source++) {
+        if (*source == '%') {
+            printl(va_arg(args, long));
+        } else printf("%c", *source);
+    }
+    va_end(args);
+}
+
+void sscanl(char *input, long *value) {
+    char temp[32];
+    char *source, *target = temp;
+    long number = 0;
+
+    for (source = input; *source != 0; source++) {
+        if (*source >= '0' && *source <= '9') break;
+    }
+
+    for (; (*source >= '0' && *source <= '9') || *source == '_'; source++) {
+        if (*source == '_') continue;
+        number = number * 10L + (*source - '0');
+    }
+
+    *value = number;
 }

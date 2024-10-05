@@ -9,24 +9,21 @@
 #include "prime.h"
 #include "number.h"
 
-long from = 2;
-long upto = 1000000;
-long span = 10000;
-char primes_data[64];
-char primes_list[64];
-char numbers_data[64];
-char numbers_list[64];
+static long from = 2;
+static long upto = 1000000;
+static long span = 10000;
+static char primes_data[64] = "Data.";
+static char primes_list[64] = "List.";
+static char numbers_data[64] = "Numbers.";
 
-int cores = 8;
-long show = 0;
-int print_primes = 1;
-int write_numbers = 0;
-int print_numbers = 0;
-int do_numbers = 0;
-int dont_run = 0;
-int is_init = 0;
+static int cores = 8;
+static long show = 0;
+static int print_primes = 1;
+static int do_numbers = 0;
+static int dont_run = 0;
+static int is_init = 0;
 
-int parse(int argc, char **argv) {
+static int parse(int argc, char **argv) {
     dont_run = argc == 0;
     
     for (int i = 0; i < argc; i++) {
@@ -34,8 +31,7 @@ int parse(int argc, char **argv) {
         else if (argv[i][0] == '+') sscanf(&argv[i][1], "%lu", &upto);
         else if (argv[i][0] == '-') sscanf(&argv[i][1], "%lu", &from);
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
-        else if (argv[i][0] == 'a') write_numbers = 1;
-        else if (argv[i][0] == 'h') print_numbers = 1;
+        else if (argv[i][0] == 'a') do_numbers = 1;
         else if (argv[i][0] == 'n') print_primes = 0;
         else if (argv[i][0] == 'p') sscanf(&argv[i][1], "%lu", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
@@ -49,14 +45,11 @@ int parse(int argc, char **argv) {
         long turns = upto / (cores * span) + 1;
         span = upto / (turns * cores);
     }
-    if (write_numbers || print_numbers) do_numbers = 1;
 
-    sprintf(primes_data, "PrimeData_%lu-%lu.dat", from, upto);
-    sprintf(primes_list, "PrimeList_%lu-%lu.lst", from, upto);
-    sprintf(numbers_data, "NumberData_%lu-%lu.dat", from, upto);
+    sprintlf(primes_data, "%-%.dat", from, upto);
+    sprintlf(primes_list, "%-%.lst", from, upto);
+    sprintlf(numbers_data, "%-%.dat", from, upto);
     unlink(numbers_data);
-    sprintf(numbers_list, "NumberList_%lu-%lu.lst", from, upto);
-    unlink(numbers_list);
 
     if (dont_run) {
         printf("Options\n");
@@ -65,21 +58,20 @@ int parse(int argc, char **argv) {
         printf("\t+#\tup to and including #\n");
         printf("\tt#\tthreads\n");
         printf("\ta\twrite numbers.dat\n");
-        printf("\th\tprint numbers.lst\n");
         printf("\tn\tdo not print primes.lst\n");
         printf("\tp#\tshow progress every #\n");
         printf("\ts#\tspan of computation\n");
         printf("\t?\tdon't run, show parameters\n");
     }
 
-    printf("From "); printl(from); printf(" to "); printl(upto); printf(" in spans of "); printl(span); printf(" on %d threads", cores);
+    printlf("From % to % in spans of %", from, upto, span);
+    printf(" on %d threads", cores);
     if (show == 0) printf(" quietly");
-    else {printf(" show "); printl(show); printf("'s");}
-    if (!do_numbers) printf(" no numbers");
+    else printlf(" show %'s", show);
     printf(" >%s", primes_data);
     if (print_primes) printf(" >%s", primes_list);
-    if (write_numbers) printf(" >%s", numbers_data);
-    if (print_numbers) printf(" >%s", numbers_list);
+    if (do_numbers) printf(" >%s", numbers_data);
+    else printf(" no numbers");
     if (is_init) printf(" INIT");
     printf("\n");
     
@@ -104,10 +96,9 @@ int main (int argc, char **argv) {
         for (next = 3; next <= span; next++)
             decomp(next, NULL, do_numbers);
     
-        printf("Init 2 .. "); printl(span); printf(" : "); printl(primes_count()); printf(" primes\n");
+        printlf("Init 2 .. % : % primes\n", span, primes_count());
         
-        if (write_numbers) numbers_write(numbers_data);
-        if (print_numbers) numbers_print(numbers_list);
+        if (do_numbers) numbers_write(numbers_data);
         numbers_close();
     } else next = from;
     
@@ -136,10 +127,10 @@ int main (int argc, char **argv) {
             primes_add_seq(sequence[thread]);
         
         long latest = primes_count();
-        printf("Span "); printl(first); printf(" .. "); printl(next - 1), printf(" on %d threads: ", threads);
-	printl(latest - sofar); printf(" primes, total "); printl(latest); printf("\n");
-        if (write_numbers) numbers_write(numbers_data);
-        if (print_numbers) numbers_print(numbers_list);
+        printlf("Span % .. %", first, next - 1);
+        printf(" on %d threads: ", threads);
+	printlf("% primes, total %\n", latest - sofar, latest);
+        if (do_numbers) numbers_write(numbers_data);
         numbers_close();
     }
 
@@ -150,22 +141,3 @@ int main (int argc, char **argv) {
     return 0;
 }
 
-void printl(long num) {
-  char temp[32];
-  int length, spaces;
-  
-  sprintf(temp, "%lu", num);
-  length = strlen(temp);
-  spaces = (length - 1) / 3;
-
-  temp[length + spaces] = 0;
-  for (int i = 1; i <= length; i++) {
-    temp[length + spaces - i] = temp[length - i];
-    if (i % 3 == 0) {
-      spaces--;
-      temp[length + spaces - i] = '_';
-    }
-  }
-
-  printf(temp);
-}

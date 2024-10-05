@@ -3,6 +3,8 @@
 #ifndef _NUMBER_H_
 #define _NUMBER_H_
 
+#include <stdarg.h>
+
 // Inialize the numbers list
 void numbers_init(
     long first,  // the first number in this list
@@ -12,11 +14,6 @@ void numbers_init(
 // After all numbers in this iteration have been computed,
 // Store the current list in binary form to file {fd}
 void numbers_write(
-    char *filename
-    );
-
-// Print the current list in text form to file {fd}
-void numbers_print(
     char *filename
     );
 
@@ -52,5 +49,12 @@ void number_addfactor(
 void number_done(
     void *number
     );
+
+// Print a long
+void printl(long num);
+void printlf(char *fmt, ...);
+int sprintl(char *output, long num);
+void sprintlf(char *output, char *fmt, ...);
+void sscanl(char *input, long *value);
 
 #endif

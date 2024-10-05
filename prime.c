@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include "prime.h"
+#include "number.h"
 
 // Object-like structure to retrieve contiguous list of primes
 // The list is the data, and callers use an iterator to go through the list
@@ -18,7 +19,7 @@ typedef struct seq_s {
 
 static struct {
     int part, offset;
-    long *primes[1000];
+    long *primes[2000];
     seq_t *sequences;
     int threads;
     long last_init;
@@ -33,8 +34,8 @@ static int selprime(const struct dirent *dir) {
 static int namesort(const struct dirent **p_dir1, const struct dirent **p_dir2) {
     long num1, num2;
 
-    sscanf(&(*p_dir1)->d_name[10], "%lu", &num1);
-    sscanf(&(*p_dir2)->d_name[10], "%lu", &num2);
+    sscanl((char*)&(*p_dir1)->d_name[10], &num1);
+    sscanl((char*)&(*p_dir2)->d_name[10], &num2);
     if (num1 == num2) return 0;
     else if (num1 < num2) return -1;
     else return 1;
@@ -51,10 +52,7 @@ static long ingest(init_t *init) {
     long prime, count, size;
     
     printf("Ingest %s from ", init->filename);
-    printl(init->first);
-    printf(" to ");
-    printl(init->last);
-    printf("\n");
+    printlf("% to %\n", init->first, init->last);
 
     file = fopen(init->filename, "rb");
     
@@ -97,8 +95,8 @@ void primes_init(int threads, int is_init) {
             for (int i = 0; i < num_files; i++) {
                 struct dirent *p_dir = p_dirlist[i];
                 strcpy(init[i].filename, p_dir->d_name);
-                sscanf(strchr(init[i].filename, '_') + 1, "%lu", &init[i].first);
-                sscanf(strchr(init[i].filename, '-') + 1, "%lu", &init[i].last);
+                sscanl(strchr(init[i].filename, '.') + 1, &init[i].first);
+                sscanl(strchr(init[i].filename, '-') + 1, &init[i].last);
             }
             
             for (int i = 0; i < num_files; i++) {
