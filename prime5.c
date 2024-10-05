@@ -10,8 +10,8 @@
 #include "number.h"
 
 static long from = 2;
-static long upto = 1000000;
-static long span = 10000;
+static long upto = 1e6;
+static long span = 1e4;
 static char numbers_data[64] = "Numbers.";
 
 static int cores = 8;
@@ -37,7 +37,9 @@ static int parse(int argc, char **argv) {
     }
     
     if (cores > 16) cores = 16;
-    if (upto < 1000) upto = 1000;
+    if (upto < 1e6) upto = 1e6;
+    if (from < 2) from = 2;
+    if (span < 1e4) span = 1e4;
     if (span > (upto / cores)) span = upto / (cores + 1);
     if (((upto - span) % span) != 0) {
         long turns = upto / (cores * span) + 1;
