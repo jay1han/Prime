@@ -19,7 +19,7 @@ void decomp(long original, void *sequence, int do_numbers) {
                     exponent++;
                     remainder /= factor;
                 } while ((remainder % factor) == 0);
-                number_addprime(number, prime_index(prime), exponent);
+                number_addfactor(number, factor, exponent);
             } else {
                 remainder = 0;
                 break;

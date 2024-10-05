@@ -31,18 +31,11 @@ void number_isprime(
     void *number
     );
 
-// Add an indexed prime to the number
-void number_addprime(
-    void *number,
-    int prime_i,
-    int exponent
-    );
-
 // Add an arbitrary factor to the number
 void number_addfactor(
     void *number,
     long factor,
-    int exponent
+    unsigned char exponent
     );
 
 // Save the number

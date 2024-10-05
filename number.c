@@ -7,9 +7,8 @@
 #include "flexint.h"
 
 typedef struct factor_s {
-    int prime_i;
     long factor;
-    int exponent;
+    unsigned char exponent;
 } factor_t;
 
 typedef struct number_s {
@@ -36,16 +35,9 @@ void numbers_write(char *filename) {
     for (long index = 0; index <= self.last - self.first; index++) {
         fwrite(&self.numbers[index].divisors, 1, 1, file);
         for (int divisor = 0; divisor < self.numbers[index].divisors; divisor++) {
-            if (self.numbers[index].factors[divisor].prime_i == -1) {
-                bytes[0] = 0xFF;
-                fwrite(bytes, 1,
-                       flex_fold(self.numbers[index].factors[divisor].factor, bytes + 1) + 1,
-                       file);
-            }
-            else
-                fwrite(bytes, 1,
-                       flex_fold(self.numbers[index].factors[divisor].prime_i, bytes),
-                       file);
+            fwrite(bytes, 1,
+                   flex_fold(self.numbers[index].factors[divisor].factor, bytes),
+                   file);
             fwrite(&self.numbers[index].factors[divisor].exponent, 1, 1, file);
         }
     }
@@ -65,16 +57,8 @@ void *number_new(long number) {
     return (void*)this;
 }
 
-inline void number_addprime(void *arg, int prime_i, int exponent) {
+inline void number_addfactor(void *arg, long factor, unsigned char exponent) {
     number_t *this = (number_t*)arg;
-    this->factors[this->divisors].prime_i  = prime_i;
-    this->factors[this->divisors].exponent = exponent;
-    this->divisors++;
-}
-
-inline void number_addfactor(void *arg, long factor, int exponent) {
-    number_t *this = (number_t*)arg;
-    this->factors[this->divisors].prime_i  = -1;
     this->factors[this->divisors].factor   = factor;
     this->factors[this->divisors].exponent = exponent;
     this->divisors++;
@@ -96,7 +80,7 @@ int sprintl(char *output, long num) {
         temp[length + spaces - i] = temp[length - i];
         if (i % 3 == 0) {
             spaces--;
-            temp[length + spaces - i] = '_';
+            if (spaces >= 0) temp[length + spaces - i] = '_';
         }
     }
     
