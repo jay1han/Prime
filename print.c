@@ -98,7 +98,7 @@ int main (int argc, char **argv) {
     long max = primes_init(1, 0, 2, 0);
     primes_close(1);
 
-    if (argc == 1) {
+    if (argc == 1 || argv[1][0] == '?') {
         printf("Options\n");
         printf("\tp\tprint known primes\n");
         printf("\t<num>\tdecompose <num>\n");

@@ -28,7 +28,8 @@ static int compspan(const void *a, const void *b) {
 
     if (span_a->first < span_b->first) return -1;
     else if (span_a->first > span_b->first) return 1;
-    return 0;
+    else if (span_b->last < span_a->last) return -1;
+    else return 1;
 }
 
 int main(int argc, char **argv) {
@@ -73,11 +74,19 @@ int main(int argc, char **argv) {
     long first = span[0].first;
     long last = span[spans - 1].last;
     
+    if (span[0].last >= span[spans - 1].last) {
+        printf("%s has superset\n", span[0].filename);
+        for (int i = 1; i < spans; i++) unlink(span[i].filename);
+        exit(0);
+    }
+    
     char filename[64];
     sprintf(filename, "%s.", NUMBERS);
     sprintlf(filename, "%-%.dat", first, last);
-    FILE *output = fopen(filename, "wb");
     printf("Output %s\n", filename);
+    if (argc > 1 && argv[1][0] == '?') exit(0);
+    
+    FILE *output = fopen(filename, "wb");
 
     unsigned char bytes[256];
     for (int i = 0; i < spans; i++) {
