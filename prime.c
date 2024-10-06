@@ -37,22 +37,11 @@ static struct {
 } self;
 
 #define PART (1<<20)
-#define DATA "Data"
+#define DATA "Primes"
 
 // Selects files starting with "Data"
 static int seldata(const struct dirent *dir) {
-    return strncmp(dir->d_name, DATA, 4) == 0;
-}
-
-// Compare filenames according to first number after "Data"
-static int namesort(const struct dirent **p_dir1, const struct dirent **p_dir2) {
-    long num1, num2;
-
-    sscanl((char*)&(*p_dir1)->d_name[5], &num1);
-    sscanl((char*)&(*p_dir2)->d_name[5], &num2);
-    if (num1 == num2) return 0;
-    else if (num1 < num2) return -1;
-    else return 1;
+    return strncmp(dir->d_name, DATA, strlen(DATA)) == 0;
 }
 
 static void primes_scan(unsigned char *bytes, int size) {
@@ -77,6 +66,9 @@ long primes_init(int threads, int is_init, long upto) {
     self.threads = threads;
     self.sequences = calloc(sizeof(seq_t), threads);
 
+    sprintf(self.filename, "%s.", DATA);
+    sprintlf(self.filename, "%.dat", self.upto);
+    
     long previous;
     if (is_init) previous = 1;
     else {
@@ -95,6 +87,11 @@ long primes_init(int threads, int is_init, long upto) {
         }
         
         char *filename = p_dirlist[0]->d_name;
+        if (strcmp(filename, self.filename) == 0) {
+            printf("%s : already done\n", filename);
+            exit(0);
+        }
+        
         FILE *file;
         sscanl(strchr(filename, '.') + 1, &previous);
 
@@ -119,8 +116,6 @@ long primes_init(int threads, int is_init, long upto) {
         printpf(" RAM %\n", primes_size());
     }
 
-    sprintf(self.filename, "%s.", DATA);
-    sprintlf(self.filename, "%.dat", self.upto);
     self.file = fopen(self.filename, "wb");
     self.written.part = 0;
     self.written.offset = 0;
@@ -241,19 +236,18 @@ void primes_write() {
 
 // Erase previous files
 void primes_close(int cancel) {
-    struct dirent **p_dirlist, *p_dir;
-    int num_files;
-
     fclose(self.file);
     if (cancel) unlink(self.filename);
-    
-    num_files = scandir(".", &p_dirlist, seldata, NULL);
-    for (int i = 0; i < num_files; i++) {
-        struct dirent *p_dir = p_dirlist[i];
-        if (strcmp(p_dir->d_name, self.filename))
-            unlink(p_dir->d_name);
+    else {
+        struct dirent **p_dirlist, *p_dir;
+        int num_files = scandir(".", &p_dirlist, seldata, NULL);
+        for (int i = 0; i < num_files; i++) {
+            struct dirent *p_dir = p_dirlist[i];
+            if (strcmp(p_dir->d_name, self.filename))
+                unlink(p_dir->d_name);
+        }
+        if (num_files > 0) free(p_dirlist);
     }
-    if (num_files > 0) free(p_dirlist);
 }
 
 // Return a sequence
