@@ -29,6 +29,11 @@ static struct {
     long count;                   // Number of primes
     long last;                    // Largest known prime
     long upto;
+    char filename[64];
+    FILE *file;
+    struct {
+        int part, offset;
+    } written;
 } self;
 
 #define PART (1<<20)
@@ -114,6 +119,12 @@ long primes_init(int threads, int is_init, long upto) {
         printpf(" RAM %\n", primes_size());
     }
 
+    sprintf(self.filename, "%s.", DATA);
+    sprintlf(self.filename, "%.dat", self.upto);
+    self.file = fopen(self.filename, "wb");
+    self.written.part = 0;
+    self.written.offset = 0;
+        
     return previous;
 }
 
@@ -211,27 +222,38 @@ inline long primes_size() {
     return (long)PART * (self.part + 1);
 }
 
-// Write the full list of primes, erasing the previous files
+// Write a list of primes
 void primes_write() {
+    if (self.written.part == self.part)
+        fwrite(self.bytes[self.written.part] + self.written.offset, 1,
+               self.offset - self.written.offset, self.file);
+    else {
+        fwrite(self.bytes[self.written.part] + self.written.offset, 1,
+               PART - self.written.offset, self.file);
+        for (int part = self.written.part + 1; part < self.part; part++)
+            fwrite(self.bytes[part], 1, PART, self.file);
+        fwrite(self.bytes[self.part], 1, self.offset, self.file);
+    }
+
+    self.written.part   = self.part;
+    self.written.offset = self.offset;
+}
+
+// Erase previous files
+void primes_close(int cancel) {
     struct dirent **p_dirlist, *p_dir;
     int num_files;
 
+    fclose(self.file);
+    if (cancel) unlink(self.filename);
+    
     num_files = scandir(".", &p_dirlist, seldata, NULL);
     for (int i = 0; i < num_files; i++) {
         struct dirent *p_dir = p_dirlist[i];
-        unlink(p_dir->d_name);
+        if (strcmp(p_dir->d_name, self.filename))
+            unlink(p_dir->d_name);
     }
     if (num_files > 0) free(p_dirlist);
-    
-    char datafile[64];
-    sprintf(datafile, "%s.", DATA);
-    sprintlf(datafile, "%.dat", self.upto);
-    FILE *data = fopen(datafile, "wb");
-        
-    for (int part = 0; part < self.part; part++)
-        fwrite(self.bytes[part], 1, PART, data);
-    fwrite(self.bytes[self.part], 1, self.offset, data);
-    fclose(data);
 }
 
 // Return a sequence

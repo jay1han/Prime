@@ -39,6 +39,11 @@ void primes_add_seq(
 // Write to file
 void primes_write();
 
+// Close and clean up
+void primes_close(
+    int cancel
+    );
+
 // Allocate an iterator
 void *prime_new(
     );                   // returns an iterator object

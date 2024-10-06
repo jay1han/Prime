@@ -66,12 +66,14 @@ int main (int argc, char **argv) {
     if (do_numbers) {
         if (from > next) {
             printlf("Can't start from  % > %  known\n", from, next - 1);
+            primes_close(1);
             exit(0);
         }
         next = from;
     } else {
         if (upto < next) {
             printlf("Already computed  % >= %\n", next - 1, upto);
+            primes_close(1);
             exit(0);
         }
     }
@@ -138,6 +140,7 @@ int main (int argc, char **argv) {
             numbers_write(numbers_data, do_numbers);
             numbers_close();
         }
+        primes_write();
         if (++spin == 4) spin = 0;
     }
     printf("\n");
@@ -145,6 +148,7 @@ int main (int argc, char **argv) {
     printlf("Total  % primes last = % ", primes_count(), primes_last());
     printpf(" RAM usage %\n", primes_size());
     primes_write();
+    primes_close(0);
     
     return 0;
 }
