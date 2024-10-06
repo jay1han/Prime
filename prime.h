@@ -39,6 +39,8 @@ void primes_add_seq(
 // Write to file
 void primes_write();
 
+void primes_print();
+
 // Close and clean up
 void primes_close(
     int cancel

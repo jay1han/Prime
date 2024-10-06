@@ -8,7 +8,7 @@
 
 static char spinner[4] = "|/-\\";
 
-static int run(char *filename, int chunked) {
+static int numbers(char *filename, int chunked) {
     long number = 2;
     unsigned char bytes[256];
     int divisors;
@@ -101,24 +101,32 @@ static int run(char *filename, int chunked) {
 
 int main (int argc, char **argv) {
     long max = primes_init(1, 0, 2, 0);
+    primes_close(1);
 
-    if (argc == 1 || argv[1][0] == 'p') {
-        // Print all primes
-        void *prime = prime_new();
-        long step, maxstep = 0;
-        long factor = prime_next(prime, &step);
-
-        while (factor != 0) {
-            if (step > maxstep) maxstep = step;
-            printlf("%\n", factor);
-            factor = prime_next(prime, &step);
-        }
-        prime_end(prime);
-        printlf("Max step %\n", maxstep);
+    if (argc == 1) {
+        printf("Options\n");
+        printf("\tp\tprint known primes\n");
+        printf("\t<num>\tdecompose <num>\n");
+        printf("\t<file>\tprint a Numbers file\n");
+        printf("\t\tor append c to write a Chunked version\n");
         
     } else if (argc > 1) {
+        if (argv[1][0] == 'p') {
+            // Print all primes
+            void *prime = prime_new();
+            long step, maxstep = 0;
+            long factor = prime_next(prime, &step);
+
+            while (factor != 0) {
+                if (step > maxstep) maxstep = step;
+                printlf("%\n", factor);
+                factor = prime_next(prime, &step);
+            }
+            prime_end(prime);
+            printlf("Max step between consecutive primes : %\n", maxstep);
         
-        if (argv[1][0] >= '1' && argv[1][0] <= '9') {
+        
+        } else if (argv[1][0] >= '1' && argv[1][0] <= '9') {
             // Decompose the number
             if (strlen(argv[1]) > 18) fprintf(stderr, "Too long\n");
             else {
@@ -137,17 +145,16 @@ int main (int argc, char **argv) {
             
         } else {
             // Print Numbers.dat file
-            int chunked = 0;
             if (argc > 2) {
-                if (argv[2][0] == 'c') chunked = run(argv[1], -1);
+                int chunked = 0;
+                if (argv[2][0] == 'c') chunked = numbers(argv[1], -1);
                 else sscanf(argv[2], "%d", &chunked);
                 
                 fprintf(stderr, "Chunk to %d bytes. ", chunked);
-                run(argv[1], chunked);
-            } else run(argv[1], 0);
+                numbers(argv[1], chunked);
+            } else numbers(argv[1], 0);
         }
     }
     
-    primes_close(1);
     return 0;
 }

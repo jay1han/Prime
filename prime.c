@@ -248,10 +248,18 @@ void primes_write() {
     self.written.offset = self.offset;
 }
 
+void primes_print() {
+    void *iterator = prime_new();
+    long prime;
+
+    while ((prime = prime_next(iterator, NULL)) != 0)
+        printlf("%\n", prime);
+}
+
 // Erase previous files
 void primes_close(int cancel) {
     fclose(self.file);
-    if (cancel) unlink(self.filename);
+    if (cancel > 0) unlink(self.filename);
     else {
         struct dirent **p_dirlist, *p_dir;
         int num_files = scandir(".", &p_dirlist, seldata, NULL);

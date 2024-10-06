@@ -56,11 +56,11 @@ int main (int argc, char **argv) {
     if (dont_run) {
         printf("Options\n");
         printf("\ti\tinitialise data\n");
-        printf("\t#\tup to\n");
-        printf("\t+#\tstart from # (numbers only)\n");
-        printf("\tt#\tthreads\n");
+        printf("\t<num>\tup to\n");
+        printf("\t+<num>\tstart from <num> (do numbers only)\n");
+        printf("\tt<num>\tthreads\n");
         printf("\tn\twrite numbers.dat\n");
-        printf("\ts#\tspan of computation\n");
+        printf("\ts<num>\tspan of computation\n");
         printf("\t?\tdon't run, show parameters\n");
     }
 
