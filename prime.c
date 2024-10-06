@@ -56,7 +56,7 @@ static void primes_scan(unsigned char *bytes, int size) {
 }
 
 // Find file starting with "Data" and ingest it, return last known prime
-long primes_init(int threads, int is_init, long upto) {
+long primes_init(int threads, int is_init, long upto, int do_print) {
     self.part = 0;
     self.offset = 0;
     self.count = 0;
@@ -77,28 +77,30 @@ long primes_init(int threads, int is_init, long upto) {
         
         num_files = scandir(".", &p_dirlist, seldata, NULL);
         if (num_files > 1) {
-            printf("Too many Data files\n");
+            fprintf(stderr, "Too many Data files\n");
             exit(0);
         }
 
         if (num_files == 0) {
-            printf("No Data file\n");
+            fprintf(stderr, "No Data file\n");
             exit(0);
         }
         
         char *filename = p_dirlist[0]->d_name;
         if (strcmp(filename, self.filename) == 0) {
-            printf("%s : already done\n", filename);
+            fprintf(stderr, "%s : already done\n", filename);
             exit(0);
         }
         
         FILE *file;
         sscanl(strchr(filename, '.') + 1, &previous);
 
-        printf("%s up to ", filename);
-        printlf(" % ", previous);
-        fflush(stdout);
-
+        if (do_print) {
+            printf("%s up to ", filename);
+            printlf(" % ", previous);
+            fflush(stdout);
+        }
+        
         file = fopen(filename, "rb");
 
         while ((self.offset = fread(self.bytes[self.part], 1, PART, file)) == PART) {
@@ -111,9 +113,11 @@ long primes_init(int threads, int is_init, long upto) {
         for (int part = 0; part < self.part; part++)
             primes_scan(self.bytes[part], PART);
         primes_scan(self.bytes[self.part], self.offset);
-
-        printlf(": % primes, last %,", self.count, self.last);
-        printpf(" RAM %\n", primes_size());
+        
+        if (do_print) {
+            printlf(": % primes, last %,", self.count, self.last);
+            printpf(" RAM %\n", primes_size());
+        }
     }
 
     self.file = fopen(self.filename, "wb");
@@ -205,6 +209,16 @@ void prime_end(void *arg) {
     free(arg);
 }
 
+inline long prime_get(long index) {
+    void *prime = prime_new();
+    long found;
+
+    for (long i = 0; i < index; i++) found = prime_next(prime, NULL);
+    prime_end(prime);
+
+    return found;
+}
+
 inline long primes_count() {
     return self.count;
 }
@@ -284,3 +298,4 @@ void primes_add_seq(void *arg) {
     
     sequence->primes = NULL;
 }
+

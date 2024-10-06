@@ -2,10 +2,6 @@
 
 ## Todo
 
-- Merge Numbers files
+- Timer
 
-- Separate printer
-
-- Querier
-
-
+- Intercept signal

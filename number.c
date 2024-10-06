@@ -92,6 +92,25 @@ inline void number_addfactor(void *arg, long factor, unsigned char exponent) {
 void number_done(void *arg) {
 }
 
+void number_print(long number) {
+    if (self.last == 0 || number < self.first || number > self.last) {
+        printlf("% is not in the list\n", number);
+        return;
+    }
+    
+    number_t *this = &self.numbers[number - self.first];
+
+    if (this->divisors == 0) printlf("% P\n", number);
+    else {
+        printlf("%=", number);
+        for (int i = 0; i < this->divisors; i++) {
+            printlf(" %", this->factors[i].factor);
+            printf("^%d", this->factors[i].exponent);
+        }
+        printf("\n");
+    }
+}
+
 int sprintl(char *output, long num) {
     char temp[32];
     int length, spaces;

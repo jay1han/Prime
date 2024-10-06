@@ -51,6 +51,8 @@ void number_done(
     void *number
     );
 
+void number_print(long number);
+
 // Print longs
 void printl(long num);
 void printlf(char *fmt, ...);

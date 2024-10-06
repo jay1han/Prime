@@ -1,5 +1,3 @@
-// V5: for larger sizes
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -66,7 +64,7 @@ int main (int argc, char **argv) {
         printf("\t?\tdon't run, show parameters\n");
     }
 
-    next = primes_init(cores, is_init, upto) + 1;
+    next = primes_init(cores, is_init, upto, 1) + 1;
     if (do_numbers) {
         if (from > next) {
             printlf("Can't start from  % > %  known\n", from, next - 1);

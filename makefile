@@ -1,8 +1,13 @@
 CC := gcc -c -O3 -ggdb -MMD -MF
 LD := gcc
-ALLOBJECTS := prime.o worker.o main.o number.o flexint.o
+ALLOBJECTS := prime.o worker.o number.o flexint.o
 
-primes: $(ALLOBJECTS)
+all: primes print
+
+primes: $(ALLOBJECTS) main.o
+	$(LD) $^ -o $@
+
+print: ${ALLOBJECTS} print.o
 	$(LD) $^ -o $@
 
 %.o: %.c

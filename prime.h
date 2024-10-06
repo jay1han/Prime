@@ -4,7 +4,7 @@
 #define _PRIME_H_
 
 // Allocate
-long primes_init(int threads, int is_init, long upto);
+long primes_init(int threads, int is_init, long upto, int do_print);
 
 // Add a number to the sequence
 void primes_add(
@@ -67,5 +67,8 @@ long prime_find(void *arg, long number);
 void prime_end(
     void *iterator
     );
+
+// Return index'th prime
+long prime_get(long index);
 
 #endif
