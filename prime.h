@@ -4,7 +4,7 @@
 #define _PRIME_H_
 
 // Allocate
-void primes_init(int threads, int is_init);
+long primes_init(int threads, int is_init);
 
 // Add a number to the sequence
 void primes_add(

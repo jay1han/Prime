@@ -9,7 +9,6 @@
 #include "prime.h"
 #include "number.h"
 
-static long from = 2;
 static long upto = 1e6;
 static long span = 1e5;
 static char numbers_data[64] = "Numbers.";
@@ -21,25 +20,32 @@ static int do_numbers = 0;
 static int dont_run = 0;
 static int is_init = 0;
 
-static int parse(int argc, char **argv) {
+int main (int argc, char **argv) {
+    long int memory = 0, filesize = 0;
+    char memory_s[20], filesize_s[20];
+    void *workers[16];
+    void *sequence[16];
+    long next;
+
+    argv++;
+    argc--;
     dont_run = argc == 0;
     
     for (int i = 0; i < argc; i++) {
         if (argv[i][0] == 'i') is_init = 1;
-        else if (argv[i][0] == '+') sscanf(&argv[i][1], "%lu", &upto);
-        else if (argv[i][0] == '-') sscanf(&argv[i][1], "%lu", &from);
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 'n') do_numbers = 1;
         else if (argv[i][0] == 'N') do_numbers = 2;
         else if (argv[i][0] == 'p') do_list = 0;
         else if (argv[i][0] == 'v') sscanf(&argv[i][1], "%lu", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
+        else if (argv[i][0] == '+') sscanf(&argv[i][1], "%lu", &upto);
+        else if (argv[i][0] >= '1' && argv[i][0] <= '9') sscanf(argv[i], "%lu", &upto);
         else dont_run = 1;
     }
     
     if (cores > 16) cores = 16;
     if (upto < 1e6) upto = 1e6;
-    if (from < 2) from = 2;
     if (span < 1e4) span = 1e4;
     if (span > (upto / cores)) span = upto / (cores + 1);
     if (((upto - span) % span) != 0) {
@@ -50,8 +56,7 @@ static int parse(int argc, char **argv) {
     if (dont_run) {
         printf("Options\n");
         printf("\ti\tinitialise data\n");
-        printf("\t-#\tstart from #\n");
-        printf("\t+#\tup to and including #\n");
+        printf("\t#\tup to\n");
         printf("\tt#\tthreads\n");
         printf("\tn\twrite numbers.dat\n");
         printf("\tN\twrite numbers.dxt\n");
@@ -61,16 +66,20 @@ static int parse(int argc, char **argv) {
         printf("\t?\tdon't run, show parameters\n");
     }
 
-    printlf("From % to % in spans of %", from, upto, span);
+    next = primes_init(cores, is_init) + 1;
+    if (is_init) next = 2;
+    if (upto <= next) upto = next * 2;
+                          
+    printlf("From  %  to  %  in spans of  % ", next, upto, span);
     printf(" on %d threads", cores);
     if (show == 0) printf(" quietly");
     else printlf(" show %'s", show);
     printf(" >Data");
     if (do_list) printf(" >List");
     if (do_numbers == 1)
-        sprintlf(numbers_data, "%-%.dat", from, upto);
+        sprintlf(numbers_data, "%-%.dat", next, upto);
     else if (do_numbers == 2)
-        sprintlf(numbers_data, "%-%.dxt", from, upto);
+        sprintlf(numbers_data, "%-%.dxt", next, upto);
     if (do_numbers) {
         unlink(numbers_data);
         printf(" >%s", numbers_data);
@@ -78,21 +87,8 @@ static int parse(int argc, char **argv) {
     else printf(" no numbers");
     if (is_init) printf(" INIT");
     printf("\n");
+    if (dont_run) return 0;
     
-    return dont_run;
-}
-
-int main (int argc, char **argv) {
-    long int memory = 0, filesize = 0;
-    char memory_s[20], filesize_s[20];
-    void *workers[16];
-    void *sequence[16];
-    long next;
-
-    if(parse(argc - 1, argv + 1)) return 0;
-
-    primes_init(cores, is_init);
-
     if (is_init) {
         primes_add(2);
         if (do_numbers) numbers_init(2, span);
@@ -100,7 +96,7 @@ int main (int argc, char **argv) {
         for (next = 3; next <= span; next++)
             decomp(next, NULL, do_numbers);
     
-        printlf("Init 2 .. % : % primes\n", span, primes_count());
+        printlf("Init 2 .. %  : %  primes\n", span, primes_count());
         
         if (do_numbers) {
             numbers_write(numbers_data, do_numbers);
@@ -109,10 +105,9 @@ int main (int argc, char **argv) {
         
     } else {
         if (upto < primes_last()) {
-            printlf("Already computed % > %\n", primes_last(), upto);
+            printlf("Already computed  % > %\n", primes_last(), upto);
             exit(0);
         }
-        next = from;
     }
     
     while (next <= upto) {
@@ -142,17 +137,17 @@ int main (int argc, char **argv) {
             primes_add_seq(sequence[thread]);
         
         long latest = primes_count();
-        printlf("Span % .. %", first, next - 1);
+        printlf("Span  % .. % ", first, next - 1);
         printf(" on %d threads: ", threads);
-        printlf("% primes, total %\n", latest - sofar, latest);
+        printlf("%  primes, total  %\n", latest - sofar, latest);
         if (do_numbers) {
             numbers_write(numbers_data, do_numbers);
             numbers_close();
         }
     }
 
-    printlf("Total % primes last=%", primes_count(), primes_last());
-    printpf(" RAM usage %\n", primes_size());
+    printlf("Total  % primes last = % ", primes_count(), primes_last());
+    printpf(" RAM usage  %\n", primes_size());
     primes_write(upto, do_list);
     
     return 0;

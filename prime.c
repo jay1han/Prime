@@ -66,8 +66,8 @@ static void primes_scan(unsigned char *bytes, int size) {
     }
 }
 
-// Find file starting with "Data" and ingest it
-void primes_init(int threads, int is_init) {
+// Find file starting with "Data" and ingest it, return last known prime
+long primes_init(int threads, int is_init) {
     self.part = 0;
     self.offset = 0;
     self.count = 0;
@@ -98,7 +98,7 @@ void primes_init(int threads, int is_init) {
         sscanl(strchr(filename, '-') + 1, &last);
 
         printf("Ingest %s from ", filename);
-        printlf("% to %\n", first, last);
+        printlf(" %  to  %\n", first, last);
 
         file = fopen(filename, "rb");
 
@@ -113,9 +113,11 @@ void primes_init(int threads, int is_init) {
             primes_scan(self.bytes[part], PART);
         primes_scan(self.bytes[self.part], self.offset);
 
-        printlf("Ingested % primes, last=%", self.count, self.last);
-        printpf(" RAM usage %\n", primes_size());
+        printlf("Ingested  % primes, last = % ", self.count, self.last);
+        printpf(" RAM usage  %\n", primes_size());
     }
+
+    return self.last;
 }
 
 // Add one prime
