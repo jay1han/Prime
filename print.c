@@ -12,15 +12,15 @@ static int numbers(char *filename, int chunked) {
     long number = 2;
     unsigned char bytes[256];
     int divisors;
-    int numsize, maxsize = 0;
+    int numsize, maxsize = 0, factors;
     FILE *file = fopen(filename, "rb");
     FILE *out;
     unsigned char *chunk = NULL;
     int chunkp;
 
-    if (chunked > 0) {
-        chunk = malloc(chunked);
-        
+    if (chunked > 0) chunk = malloc(chunked);
+
+    if (chunked > 0 || chunked == -2) {
         char outname[64];
         strcpy(outname, filename);
         char *ext = strstr(outname, ".dat");
@@ -28,7 +28,8 @@ static int numbers(char *filename, int chunked) {
             fprintf(stderr, "Noncanonical file name\n");
             exit(0);
         }
-        sprintf(ext, ".%d", chunked);
+        if (chunked == -2) sprintf(ext, ".red");
+        else sprintf(ext, ".%d", chunked);
         out = fopen(outname, "wb");
         if (out == NULL) {
             fprintf(stderr, "Can't open %s\n", outname);
@@ -41,7 +42,7 @@ static int numbers(char *filename, int chunked) {
         exit(0);
         
     } else {
-        if (chunked < 0) fprintf(stderr, "Analyzing : %s\n", filename);
+        if (chunked == -1) fprintf(stderr, "Analyzing : %s\n", filename);
         
         int spin = 0;
         while (fread(bytes, 1, 1, file) == 1) {
@@ -53,7 +54,8 @@ static int numbers(char *filename, int chunked) {
                     
             divisors = bytes[0];
             if (chunked > 0) chunk[0] = bytes[0];
-                    
+
+            factors = 0;
             if (divisors == 0) {
                 if (!chunked) printf(" P\n");
                         
@@ -66,6 +68,7 @@ static int numbers(char *filename, int chunked) {
                     long factor;
                     int size = flex_open(bytes, &factor);
                     int exponent = bytes[size];
+                    factors += exponent;
                     if (chunked > 0) {
                         memcpy(chunk + chunkp, bytes, size + 1);
                         chunkp += size + 1;
@@ -82,6 +85,11 @@ static int numbers(char *filename, int chunked) {
                 if (!chunked) printf("\n");
             }
             if (chunked > 0) fwrite(chunk, 1, chunked, out);
+            if (chunked == -2) {
+                bytes[0] = factors;
+                fwrite(bytes, 1, 1, out);
+            }
+
             number++;
 
             if ((number % 1000000) == 0) {
@@ -92,7 +100,7 @@ static int numbers(char *filename, int chunked) {
         }
         fclose(file);
 
-        if (chunked <= 0) fprintf(stderr, "Max %d bytes per number\n", maxsize);
+        if (chunked == -1) fprintf(stderr, "Max %d bytes per number\n", maxsize);
     }
 
     return maxsize;
@@ -107,7 +115,8 @@ int main (int argc, char **argv) {
         printf("\tp\tprint known primes\n");
         printf("\t<num>\tdecompose <num>\n");
         printf("\t<file>\tprint a Numbers file\n");
-        printf("\t\tor append c to write a Chunked version\n");
+        printf("\tc\twrite a Chunked version\n");
+        printf("\tr\twrite a Reduced version\n");
         
     } else if (argc > 1) {
         if (argv[1][0] == 'p') {
@@ -153,9 +162,10 @@ int main (int argc, char **argv) {
             if (argc > 2) {
                 int chunked = 0;
                 if (argv[2][0] == 'c') chunked = numbers(argv[1], -1);
+                else if (argv[2][0] == 'r') chunked = -2;
                 else sscanf(argv[2], "%d", &chunked);
                 
-                fprintf(stderr, "Chunk to %d bytes. ", chunked);
+                if (chunked > 0) fprintf(stderr, "Chunk to %d bytes. ", chunked);
                 numbers(argv[1], chunked);
             } else numbers(argv[1], 0);
         }
