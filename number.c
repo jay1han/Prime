@@ -220,3 +220,23 @@ void sscanl(char *input, long *value) {
 
     *value = number;
 }
+
+void printtf(char *fmt, ...) {
+    va_list(args);
+    char *source;
+
+    va_start(args, fmt);
+    for (source = fmt; *source != 0; source++) {
+        if (*source == '%') {
+            long sec = va_arg(args, long);
+            long hours = sec / 3600;
+            sec -= hours * 3600;
+            long mins = sec / 60;
+            sec -= mins * 60;
+            if (hours > 0) printf("%ldh %02ldm %02lds", hours, mins, sec);
+            else if (mins > 0) printf("%ldm %02lds", mins, sec);
+            else printf("%lds", sec);
+        } else printf("%c", *source);
+    }
+    va_end(args);
+}

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <time.h>
 #include "prime.h"
 #include "number.h"
 #include "flexint.h"
@@ -68,6 +69,7 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
 
     sprintf(self.filename, "%s.", DATA);
     sprintlf(self.filename, "%.dat", self.upto);
+    self.file = NULL;
     
     long previous;
     if (is_init) previous = 1;
@@ -87,10 +89,7 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
         }
         
         char *filename = p_dirlist[0]->d_name;
-        if (strcmp(filename, self.filename) == 0) {
-            fprintf(stderr, "%s : already done\n", filename);
-            exit(0);
-        }
+        if (strcmp(filename, self.filename) == 0) self.filename[0] = 0;
         
         FILE *file;
         sscanl(strchr(filename, '.') + 1, &previous);
@@ -120,7 +119,7 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
         }
     }
 
-    self.file = fopen(self.filename, "wb");
+    if (self.filename[0]) self.file = fopen(self.filename, "wb");
     self.written.part = 0;
     self.written.offset = 0;
         
@@ -233,6 +232,8 @@ inline long primes_size() {
 
 // Write a list of primes
 void primes_write() {
+    if (!self.file) return;
+    
     if (self.written.part == self.part)
         fwrite(self.bytes[self.written.part] + self.written.offset, 1,
                self.offset - self.written.offset, self.file);
@@ -258,6 +259,8 @@ void primes_print() {
 
 // Erase previous files
 void primes_close(int cancel) {
+    if (!self.file) return;
+    
     fclose(self.file);
     if (cancel > 0) unlink(self.filename);
     else {

@@ -61,6 +61,7 @@ void fprintlf(FILE *out, char *fmt, ...);
 void printpf(char *fmr, ...);
 int sprintl(char *output, long num);
 void sprintlf(char *output, char *fmt, ...);
+void printtf(char *fmt, ...);
 
 // Scan a punctuated long
 void sscanl(char *input, long *value);

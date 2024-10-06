@@ -3,6 +3,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h>
 #include "worker.h"
 #include "prime.h"
 #include "number.h"
@@ -79,7 +80,7 @@ int main (int argc, char **argv) {
             exit(0);
         }
     }
-                          
+
     printlf("Calculate  %  to  %  in spans of  % ", next, upto, span);
     printf(" on %d threads", cores);
     if (do_numbers) {
@@ -92,6 +93,7 @@ int main (int argc, char **argv) {
     printf("\n");
     if (dont_run) return 0;
     
+    time_t start = time(NULL);
     if (is_init) {
         primes_add(2);
         if (do_numbers) numbers_init(2, span);
@@ -151,6 +153,8 @@ int main (int argc, char **argv) {
     printpf(" RAM usage %\n", primes_size());
     primes_write();
     primes_close(0);
+
+    printtf("Calculation time %\n", time(NULL) - start);
     
     return 0;
 }
