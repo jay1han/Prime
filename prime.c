@@ -62,6 +62,8 @@ static void primes_scan(unsigned char *bytes, int size) {
 
 // Find file starting with "Data" and ingest it, return last known prime
 long primes_init(int threads, int is_init) {
+    long upto;
+    
     self.part = 0;
     self.offset = 0;
     self.count = 0;
@@ -74,7 +76,7 @@ long primes_init(int threads, int is_init) {
         int num_files;
         struct dirent **p_dirlist;
         
-        num_files = scandir(".", &p_dirlist, seldata, namesort);
+        num_files = scandir(".", &p_dirlist, seldata, NULL);
         if (num_files > 1) {
             printf("Too many Data files\n");
             exit(0);
@@ -87,12 +89,11 @@ long primes_init(int threads, int is_init) {
         
         char *filename = p_dirlist[0]->d_name;
         FILE *file;
-        long first, last;
-        sscanl(strchr(filename, '.') + 1, &first);
-        sscanl(strchr(filename, '-') + 1, &last);
+        sscanl(strchr(filename, '.') + 1, &upto);
 
-        printf("Ingest \"%s\" from ", filename);
-        printlf(" %  to  %\n", first, last);
+        printf("%s up to ", filename);
+        printlf(" % ", upto);
+        fflush(stdout);
 
         file = fopen(filename, "rb");
 
@@ -107,11 +108,11 @@ long primes_init(int threads, int is_init) {
             primes_scan(self.bytes[part], PART);
         primes_scan(self.bytes[self.part], self.offset);
 
-        printlf("Ingested  % primes, last = % ", self.count, self.last);
-        printpf(" RAM usage %\n", primes_size());
+        printlf(": % primes, last %,", self.count, self.last);
+        printpf(" RAM %\n", primes_size());
     }
 
-    return self.last;
+    return upto;
 }
 
 // Add one prime
@@ -222,7 +223,7 @@ void primes_write(long upto) {
     
     char datafile[64];
     sprintf(datafile, "%s.", DATA);
-    sprintlf(datafile, "2-%.dat", upto);
+    sprintlf(datafile, "%.dat", upto);
     FILE *data = fopen(datafile, "wb");
         
     for (int part = 0; part < self.part; part++)

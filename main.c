@@ -19,6 +19,8 @@ static int do_numbers = 0;
 static int dont_run = 0;
 static int is_init = 0;
 
+static char spinner[] = "|/-\\";
+
 int main (int argc, char **argv) {
     long int memory = 0, filesize = 0;
     char memory_s[20], filesize_s[20];
@@ -60,11 +62,11 @@ int main (int argc, char **argv) {
         printf("\t?\tdon't run, show parameters\n");
     }
 
-    next = primes_init(cores, is_init);
+    next = primes_init(cores, is_init) + 1;
     if (is_init) next = 2;
     if (do_numbers) {
         if (from > next) {
-            printlf("Can't start from  % > %  last known prime\n", from, next);
+            printlf("Can't start from  % > %  last known prime\n", from, next - 1);
             exit(0);
         }
         next = from;
@@ -97,12 +99,13 @@ int main (int argc, char **argv) {
         }
         
     } else {
-        if (upto < primes_last()) {
+        if ((do_numbers == 0) && (upto < primes_last())) {
             printlf("Already computed  % > %\n", primes_last(), upto);
             exit(0);
         }
     }
-    
+
+    int spin = 0;
     while (next <= upto) {
         long first = next;
         long sofar = primes_count();
@@ -130,14 +133,16 @@ int main (int argc, char **argv) {
             primes_add_seq(sequence[thread]);
         
         long latest = primes_count();
-        printlf("Span  % - % ", first, next - 1);
-        printf(" on %d threads: ", threads);
-        printlf("%  primes, total  %\n", latest - sofar, latest);
+        printf("%c ", spinner[spin]);
+        printlf("Span  % - %  :  %  primes, total  %\r", first, next - 1, latest - sofar, latest);
+        fflush(stdout);
         if (do_numbers) {
             numbers_write(numbers_data, do_numbers);
             numbers_close();
         }
+        if (++spin == 4) spin = 0;
     }
+    printf("\n");
 
     printlf("Total  % primes last = % ", primes_count(), primes_last());
     printpf(" RAM usage %\n", primes_size());
