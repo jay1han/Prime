@@ -204,6 +204,22 @@ void printpf(char *fmt, ...) {
     va_end(args);
 }
 
+void fprintpf(FILE *out, char *fmt, ...) {
+    va_list(args);
+    char *source;
+
+    va_start(args, fmt);
+    for (source = fmt; *source != 0; source++) {
+        if (*source == '%') {
+            long value = va_arg(args, long);
+            if (value < 1e6) fprintf(out, "%.3lfK", (double)value / 1e3);
+            else if (value < 1e9) fprintf(out, "%.3lfM", (double)value / 1e6);
+            else fprintf(out, "%.3lfG", (double)value / 1e9);
+        } else fprintf(out, "%c", *source);
+    }
+    va_end(args);
+}
+
 void sscanl(char *input, long *value) {
     char temp[32];
     char *source, *target = temp;
