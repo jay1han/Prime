@@ -139,6 +139,13 @@ void printl(long num) {
     printf("%s", temp);
 }
 
+void fprintl(FILE *out, long num) {
+    char temp[32];
+
+    sprintl(temp, num);
+    fprintf(out, "%s", temp);
+}
+
 void sprintlf(char *output, char *fmt, ...) {
     va_list(args);
     char *target = output + strlen(output);
@@ -164,6 +171,19 @@ void printlf(char *fmt, ...) {
         if (*source == '%') {
             printl(va_arg(args, long));
         } else printf("%c", *source);
+    }
+    va_end(args);
+}
+
+void fprintlf(FILE *out, char *fmt, ...) {
+    va_list(args);
+    char *source;
+
+    va_start(args, fmt);
+    for (source = fmt; *source != 0; source++) {
+        if (*source == '%') {
+            fprintl(out, va_arg(args, long));
+        } else fprintf(out, "%c", *source);
     }
     va_end(args);
 }

@@ -55,7 +55,9 @@ void number_print(long number);
 
 // Print longs
 void printl(long num);
+void fprintl(FILE *out, long num);
 void printlf(char *fmt, ...);
+void fprintlf(FILE *out, char *fmt, ...);
 void printpf(char *fmr, ...);
 int sprintl(char *output, long num);
 void sprintlf(char *output, char *fmt, ...);

@@ -6,8 +6,6 @@
 #include "flexint.h"
 #include "worker.h"
 
-static char spinner[4] = "|/-\\";
-
 static int numbers(char *filename, int chunked) {
     long number = 2;
     unsigned char bytes[256];
@@ -15,7 +13,6 @@ static int numbers(char *filename, int chunked) {
     int numsize, maxsize = 0;
     FILE *file = fopen(filename, "rb");
     FILE *out;
-    int spin = 0;
     unsigned char *chunk = NULL;
     int chunkp;
 
@@ -84,12 +81,8 @@ static int numbers(char *filename, int chunked) {
             if (chunked > 0) fwrite(chunk, 1, chunked, out);
             number++;
 
-            if ((number % 1000000) == 0) {
-                char temp[20];
-                sprintl(temp, number);
-                fprintf(stderr, "%c %s\r", spinner[spin], temp);
-                if (++spin == 4) spin = 0;
-            }
+            if ((number % 1000000) == 0)
+                fprintlf(stderr, "%\r", number);
         }
         fclose(file);
 
@@ -123,8 +116,8 @@ int main (int argc, char **argv) {
                 factor = prime_next(prime, &step);
             }
             prime_end(prime);
-            printlf("Max step between consecutive primes : %\n", maxstep);
-        
+            fprintlf(stderr, "Up to  % : % primes. Max step %\n",
+                     max, primes_count(), maxstep);
         
         } else if (argv[1][0] >= '1' && argv[1][0] <= '9') {
             // Decompose the number
