@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
             }
             number++;
 
-            if ((number % 1000000) == 0) printlf("%\r", number);
+            if ((number % 1000000) == 0) printlf("  %\r", number);
         }
             
         fclose(input);
