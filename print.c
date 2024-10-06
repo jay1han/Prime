@@ -43,6 +43,7 @@ static int numbers(char *filename, int chunked) {
     } else {
         if (chunked < 0) fprintf(stderr, "Analyzing : %s\n", filename);
         
+        int spin = 0;
         while (fread(bytes, 1, 1, file) == 1) {
             if (!chunked) printlf("%", number);
             else if (chunked > 0) {
@@ -83,8 +84,11 @@ static int numbers(char *filename, int chunked) {
             if (chunked > 0) fwrite(chunk, 1, chunked, out);
             number++;
 
-            if ((number % 1000000) == 0)
-                fprintlf(stderr, "%\r", number);
+            if ((number % 1000000) == 0) {
+                fprintf(stderr, "%c", spinner[spin]);
+                fprintlf(stderr, " %\r", number);
+                if (++spin == 4) spin = 0;
+            }
         }
         fclose(file);
 
