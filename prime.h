@@ -4,7 +4,7 @@
 #define _PRIME_H_
 
 // Allocate
-long primes_init(int threads, int is_init);
+long primes_init(int threads, int is_init, long upto);
 
 // Add a number to the sequence
 void primes_add(
@@ -37,9 +37,7 @@ void primes_add_seq(
     );
 
 // Write to file
-void primes_write(
-    long upto
-    );
+void primes_write();
 
 // Allocate an iterator
 void *prime_new(

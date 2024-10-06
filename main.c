@@ -62,14 +62,18 @@ int main (int argc, char **argv) {
         printf("\t?\tdon't run, show parameters\n");
     }
 
-    next = primes_init(cores, is_init) + 1;
-    if (is_init) next = 2;
+    next = primes_init(cores, is_init, upto) + 1;
     if (do_numbers) {
         if (from > next) {
-            printlf("Can't start from  % > %  last known prime\n", from, next - 1);
+            printlf("Can't start from  % > %  known\n", from, next - 1);
             exit(0);
         }
         next = from;
+    } else {
+        if (upto < next) {
+            printlf("Already computed  % >= %\n", next - 1, upto);
+            exit(0);
+        }
     }
                           
     printlf("From  %  to  %  in spans of  % ", next, upto, span);
@@ -96,12 +100,6 @@ int main (int argc, char **argv) {
         if (do_numbers) {
             numbers_write(numbers_data, do_numbers);
             numbers_close();
-        }
-        
-    } else {
-        if ((do_numbers == 0) && (upto < primes_last())) {
-            printlf("Already computed  % > %\n", primes_last(), upto);
-            exit(0);
         }
     }
 
@@ -146,7 +144,7 @@ int main (int argc, char **argv) {
 
     printlf("Total  % primes last = % ", primes_count(), primes_last());
     printpf(" RAM usage %\n", primes_size());
-    primes_write(upto);
+    primes_write();
     
     return 0;
 }

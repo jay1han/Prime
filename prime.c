@@ -26,8 +26,9 @@ static struct {
     unsigned char *bytes[3000];
     seq_t *sequences;             // Pool of sequences
     int threads;                  // Max number of threads (sequences)
-    int count;                    // Number of primes
+    long count;                   // Number of primes
     long last;                    // Largest known prime
+    long upto;
 } self;
 
 #define PART (1<<20)
@@ -61,18 +62,19 @@ static void primes_scan(unsigned char *bytes, int size) {
 }
 
 // Find file starting with "Data" and ingest it, return last known prime
-long primes_init(int threads, int is_init) {
-    long upto;
-    
+long primes_init(int threads, int is_init, long upto) {
     self.part = 0;
     self.offset = 0;
     self.count = 0;
     self.last = 0;
+    self.upto = upto;
     self.bytes[0] = malloc(PART);
     self.threads = threads;
     self.sequences = calloc(sizeof(seq_t), threads);
 
-    if (!is_init) {
+    long previous;
+    if (is_init) previous = 1;
+    else {
         int num_files;
         struct dirent **p_dirlist;
         
@@ -89,10 +91,10 @@ long primes_init(int threads, int is_init) {
         
         char *filename = p_dirlist[0]->d_name;
         FILE *file;
-        sscanl(strchr(filename, '.') + 1, &upto);
+        sscanl(strchr(filename, '.') + 1, &previous);
 
         printf("%s up to ", filename);
-        printlf(" % ", upto);
+        printlf(" % ", previous);
         fflush(stdout);
 
         file = fopen(filename, "rb");
@@ -112,7 +114,7 @@ long primes_init(int threads, int is_init) {
         printpf(" RAM %\n", primes_size());
     }
 
-    return upto;
+    return previous;
 }
 
 // Add one prime
@@ -210,7 +212,7 @@ inline long primes_size() {
 }
 
 // Write the full list of primes, erasing the previous files
-void primes_write(long upto) {
+void primes_write() {
     struct dirent **p_dirlist, *p_dir;
     int num_files;
 
@@ -223,7 +225,7 @@ void primes_write(long upto) {
     
     char datafile[64];
     sprintf(datafile, "%s.", DATA);
-    sprintlf(datafile, "%.dat", upto);
+    sprintlf(datafile, "%.dat", self.upto);
     FILE *data = fopen(datafile, "wb");
         
     for (int part = 0; part < self.part; part++)
