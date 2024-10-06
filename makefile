@@ -1,17 +1,14 @@
-CC := gcc -c -O -ggdb -MMD -MF
+CC := gcc -c -O3 -ggdb -MMD -MF
 LD := gcc
-ALLOBJECTS := prime.o worker.o prime5.o number.o flexint.o
+ALLOBJECTS := prime.o worker.o main.o number.o flexint.o
 
-prime5: $(ALLOBJECTS)
+primes: $(ALLOBJECTS)
 	$(LD) $^ -o $@
 
 %.o: %.c
 	$(CC) -MMD -MF $(basename $@).d -c $< -o $@
 
 clean:
-	-@rm *.o *.d prime5
-
-prime4: prime4.c
-	gcc -O prime4.c -o prime4
+	-rm *.o *.d primes
 
 -include $(ALLOBJECTS:.o=.d)

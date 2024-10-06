@@ -10,12 +10,11 @@
 #include "number.h"
 
 static long upto = 1e6;
+static long from = 2;
 static long span = 1e5;
 static char numbers_data[64] = "Numbers.";
 
 static int cores = 8;
-static long show = 0;
-static int do_list = 1;
 static int do_numbers = 0;
 static int dont_run = 0;
 static int is_init = 0;
@@ -35,11 +34,8 @@ int main (int argc, char **argv) {
         if (argv[i][0] == 'i') is_init = 1;
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 'n') do_numbers = 1;
-        else if (argv[i][0] == 'N') do_numbers = 2;
-        else if (argv[i][0] == 'p') do_list = 0;
-        else if (argv[i][0] == 'v') sscanf(&argv[i][1], "%lu", &show);
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
-        else if (argv[i][0] == '+') sscanf(&argv[i][1], "%lu", &upto);
+        else if (argv[i][0] == '+') sscanf(&argv[i][1], "%lu", &from);
         else if (argv[i][0] >= '1' && argv[i][0] <= '9') sscanf(argv[i], "%lu", &upto);
         else dont_run = 1;
     }
@@ -57,30 +53,27 @@ int main (int argc, char **argv) {
         printf("Options\n");
         printf("\ti\tinitialise data\n");
         printf("\t#\tup to\n");
+        printf("\t+#\tstart from # (numbers only)\n");
         printf("\tt#\tthreads\n");
         printf("\tn\twrite numbers.dat\n");
-        printf("\tN\twrite numbers.dxt\n");
-        printf("\tp\tdo not print primes.lst\n");
-        printf("\tv#\tshow progress every #\n");
         printf("\ts#\tspan of computation\n");
         printf("\t?\tdon't run, show parameters\n");
     }
 
-    next = primes_init(cores, is_init) + 1;
+    next = primes_init(cores, is_init);
     if (is_init) next = 2;
-    if (upto <= next) upto = next * 2;
+    if (do_numbers) {
+        if (from > next) {
+            printlf("Can't start from  % > %  last known prime\n", from, next);
+            exit(0);
+        }
+        next = from;
+    }
                           
     printlf("From  %  to  %  in spans of  % ", next, upto, span);
     printf(" on %d threads", cores);
-    if (show == 0) printf(" quietly");
-    else printlf(" show %'s", show);
-    printf(" >Data");
-    if (do_list) printf(" >List");
-    if (do_numbers == 1)
-        sprintlf(numbers_data, "%-%.dat", next, upto);
-    else if (do_numbers == 2)
-        sprintlf(numbers_data, "%-%.dxt", next, upto);
     if (do_numbers) {
+        sprintlf(numbers_data, "%-%.dat", next, upto);
         unlink(numbers_data);
         printf(" >%s", numbers_data);
     }
@@ -96,7 +89,7 @@ int main (int argc, char **argv) {
         for (next = 3; next <= span; next++)
             decomp(next, NULL, do_numbers);
     
-        printlf("Init 2 .. %  : %  primes\n", span, primes_count());
+        printlf("Init 2 - %  : %  primes\n", span, primes_count());
         
         if (do_numbers) {
             numbers_write(numbers_data, do_numbers);
@@ -122,11 +115,11 @@ int main (int argc, char **argv) {
         
         for (threads = 0; threads < cores; threads++) {
             if (next + span > upto) {
-                workers[threads++] = worker_start(next, upto, show, do_numbers);
+                workers[threads++] = worker_start(next, upto, do_numbers);
                 next = upto + 1;
                 break;
             }
-            workers[threads] = worker_start(next, next + span - 1, show, do_numbers);
+            workers[threads] = worker_start(next, next + span - 1, do_numbers);
             next += span;
         }
     
@@ -137,7 +130,7 @@ int main (int argc, char **argv) {
             primes_add_seq(sequence[thread]);
         
         long latest = primes_count();
-        printlf("Span  % .. % ", first, next - 1);
+        printlf("Span  % - % ", first, next - 1);
         printf(" on %d threads: ", threads);
         printlf("%  primes, total  %\n", latest - sofar, latest);
         if (do_numbers) {
@@ -147,8 +140,8 @@ int main (int argc, char **argv) {
     }
 
     printlf("Total  % primes last = % ", primes_count(), primes_last());
-    printpf(" RAM usage  %\n", primes_size());
-    primes_write(upto, do_list);
+    printpf(" RAM usage %\n", primes_size());
+    primes_write(upto);
     
     return 0;
 }

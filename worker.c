@@ -34,12 +34,7 @@ void decomp(long original, void *sequence, int do_numbers) {
         else seq_add(sequence, original);
     }
     else if (do_numbers && (remainder > 1)) {
-        if (do_numbers == 1) number_addfactor(number, remainder, 1);
-        else {
-            long prime_i = prime_find(prime, remainder);
-            if (prime_i > 0) number_addprime(number, prime, 1);
-            else number_addfactor(number, remainder, 1);
-        }
+        number_addfactor(number, remainder, 1);
     }
     
     prime_end(prime);
@@ -49,7 +44,6 @@ void decomp(long original, void *sequence, int do_numbers) {
 typedef struct worker_s {
     long first;
     long last;
-    long show;
     pthread_t thread;
     void *sequence;
     int do_numbers;
@@ -60,20 +54,17 @@ static void *work(void *arg) {
     long number;
     
     for (number = worker->first; number <= worker->last; number++) {
-        if (worker->show != 0 && (number % worker->show) == 0)
-            printf("%lu\n", number);
         decomp(number, worker->sequence, worker->do_numbers);
     }
     return arg;
 }
 
-void *worker_start(long first, long last, long show, int do_numbers) {
+void *worker_start(long first, long last, int do_numbers) {
     worker_t *worker;
 
     worker = malloc(sizeof(worker_t));
     worker->first = first;
     worker->last  = last;
-    worker->show  = show;
     worker->do_numbers = do_numbers;
     worker->sequence   = seq_alloc(last - first);
 

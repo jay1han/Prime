@@ -32,16 +32,10 @@ static struct {
 
 #define PART (1<<20)
 #define DATA "Data"
-#define LIST "List"
 
 // Selects files starting with "Data"
 static int seldata(const struct dirent *dir) {
     return strncmp(dir->d_name, DATA, 4) == 0;
-}
-
-// Selects files starting with "Data" or "List"
-static int sellist(const struct dirent *dir) {
-    return strncmp(dir->d_name, LIST, 4) == 0;
 }
 
 // Compare filenames according to first number after "Data"
@@ -97,7 +91,7 @@ long primes_init(int threads, int is_init) {
         sscanl(strchr(filename, '.') + 1, &first);
         sscanl(strchr(filename, '-') + 1, &last);
 
-        printf("Ingest %s from ", filename);
+        printf("Ingest \"%s\" from ", filename);
         printlf(" %  to  %\n", first, last);
 
         file = fopen(filename, "rb");
@@ -114,7 +108,7 @@ long primes_init(int threads, int is_init) {
         primes_scan(self.bytes[self.part], self.offset);
 
         printlf("Ingested  % primes, last = % ", self.count, self.last);
-        printpf(" RAM usage  %\n", primes_size());
+        printpf(" RAM usage %\n", primes_size());
     }
 
     return self.last;
@@ -215,7 +209,7 @@ inline long primes_size() {
 }
 
 // Write the full list of primes, erasing the previous files
-void primes_write(long upto, int do_list) {
+void primes_write(long upto) {
     struct dirent **p_dirlist, *p_dir;
     int num_files;
 
@@ -235,32 +229,6 @@ void primes_write(long upto, int do_list) {
         fwrite(self.bytes[part], 1, PART, data);
     fwrite(self.bytes[self.part], 1, self.offset, data);
     fclose(data);
-    
-    if (do_list) {
-        
-        num_files = scandir(".", &p_dirlist, sellist, NULL);
-        for (int i = 0; i < num_files; i++) {
-            struct dirent *p_dir = p_dirlist[i];
-            unlink(p_dir->d_name);
-        }
-        if (num_files > 0) free(p_dirlist);
-        
-        char listfile[64];
-        sprintf(listfile, "%s.", LIST);
-        sprintlf(listfile, "2-%.lst", upto);
-        FILE *list = fopen(listfile, "w");
-
-        void *iterator = prime_new();
-        long prime = prime_next(iterator, NULL);
-        unsigned char bytes[10];
-        
-        while (prime != 0) {
-            fprintf(list, "%lu\n", prime);
-            prime = prime_next(iterator, NULL);
-        }
-        
-        fclose(list);
-    }
 }
 
 // Return a sequence

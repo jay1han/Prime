@@ -8,7 +8,6 @@ void decomp(long number, void *sequence, int do_numbers);
 void *worker_start(
     long begin,
     long last,
-    long show,
     int do_numbers
     );                      // returns a worker object
 
