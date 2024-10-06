@@ -38,7 +38,11 @@ int main (int argc, char **argv) {
         else if (argv[i][0] == 'n') do_numbers = 1;
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
         else if (argv[i][0] == '+') sscanf(&argv[i][1], "%lu", &from);
-        else if (argv[i][0] >= '1' && argv[i][0] <= '9') sscanf(argv[i], "%lu", &upto);
+        else if (argv[i][0] >= '1' && argv[i][0] <= '9') {
+            sscanf(argv[i], "%lu", &upto);
+            if (argv[i][strlen(argv[i]) - 1] == 'g') upto *= 1e9;
+            if (argv[i][strlen(argv[i]) - 1] == 'm') upto *= 1e6;
+        }
         else dont_run = 1;
     }
     
@@ -78,7 +82,7 @@ int main (int argc, char **argv) {
         }
     }
                           
-    printlf("From  %  to  %  in spans of  % ", next, upto, span);
+    printlf("Calculate  %  to  %  in spans of  % ", next, upto, span);
     printf(" on %d threads", cores);
     if (do_numbers) {
         sprintlf(numbers_data, "%-%.dat", next, upto);
