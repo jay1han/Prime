@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h>
 #include "prime.h"
 #include "number.h"
 #include "flexint.h"
@@ -34,8 +35,8 @@ int main(int argc, char **argv) {
     struct dirent **p_dirlist;
     int num_files = scandir(".", &p_dirlist, selnum, NULL);
 
-    if (num_files == 0) {
-        printf("No files\n");
+    if (num_files <= 1) {
+        printf("Nothing to merge\n");
         exit(0);
     }
     
@@ -113,4 +114,6 @@ int main(int argc, char **argv) {
     fclose(output);
     printf("Output %s : ", filename);
     printlf(" % - %\n", first, last);
+
+    for (int i = 0; i < spans; i++) unlink(span[i].filename);
 }
