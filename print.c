@@ -100,13 +100,9 @@ static int numbers(char *filename, int chunked) {
 }
 
 int main (int argc, char **argv) {
-    long max = primes_init(1, 0, 2, 0);
-    primes_close(1);
-
     if (argc == 1 || argv[1][0] == '?') {
         printf("Options\n");
         printf("\tp\tprint known primes\n");
-        printf("\t<num>\tdecompose <num>\n");
         printf("\t<file>\tprint a Numbers file\n");
         printf("\tc\twrite a Chunked version\n");
         printf("\tr\twrite a Reduced version\n");
@@ -114,6 +110,8 @@ int main (int argc, char **argv) {
     } else if (argc > 1) {
         if (argv[1][0] == 'p') {
             // Print all primes
+            long max_prime = primes_init(1, 0, 2, 0);
+            primes_close(1);
             void *prime = prime_new();
             long step, maxstep = 0;
             long factor = prime_next(prime, &step);
@@ -126,25 +124,8 @@ int main (int argc, char **argv) {
             }
             prime_end(prime);
             fprintlf(stderr, "Up to  % : % primes. Max step %\n",
-                     max, primes_count(), maxstep);
+                     max_prime, primes_count(), maxstep);
         
-        } else if (argv[1][0] >= '1' && argv[1][0] <= '9') {
-            // Decompose the number
-            if (strlen(argv[1]) > 18) fprintf(stderr, "Too long\n");
-            else {
-                long number;
-                sscanl(argv[1], &number);
-
-                if (number > max)
-                    printlf("% is too big, max %\n", number, max);
-                else {
-                    numbers_init(number, number);
-                    decomp(number, NULL, 1);
-                    number_print(number);
-                    numbers_close();
-                }
-            }
-            
         } else {
             // Print Numbers.dat file
             if (argc > 2) {

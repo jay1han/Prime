@@ -267,7 +267,7 @@ void primes_close(int cancel) {
     
     fclose(self.file);
     if (cancel > 0) unlink(self.filename);
-    else {
+    else if (self.filename[0]) {
         struct dirent **p_dirlist, *p_dir;
         int num_files = scandir(".", &p_dirlist, seldata, NULL);
         for (int i = 0; i < num_files; i++) {

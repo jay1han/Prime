@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include "prime.h"
 #include "number.h"
 #include "flexint.h"
 #include "worker.h"
