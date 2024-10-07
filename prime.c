@@ -47,6 +47,18 @@ static int seldata(const struct dirent *dir) {
     return strncmp(dir->d_name, DATA, strlen(DATA)) == 0;
 }
 
+// Reverse compare so we get the largest file
+static int compdata(const struct dirent **pf1,
+                    const struct dirent **pf2) {
+    long last1, last2;
+
+    sscanl(strchr((*pf1)->d_name, '.') + 1, &last1);
+    sscanl(strchr((*pf2)->d_name, '.') + 1, &last2);
+    if (last1 < last2) return 1;
+    if (last1 > last2) return -1;
+    return 0;
+}
+
 static void primes_scan(unsigned char *bytes, int size) {
     long step;
 
@@ -80,14 +92,9 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
         int num_files;
         struct dirent **p_dirlist;
         
-        num_files = scandir(".", &p_dirlist, seldata, NULL);
-        if (num_files > 1) {
-            fprintf(stderr, "Too many Data files\n");
-            exit(0);
-        }
-
+        num_files = scandir(".", &p_dirlist, seldata, compdata);
         if (num_files == 0) {
-            fprintf(stderr, "No Data file\n");
+            fprintf(stderr, "No Primes file\n");
             exit(0);
         }
         
