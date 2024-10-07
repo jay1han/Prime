@@ -16,17 +16,21 @@ static int numbers(char *filename, int chunked) {
     FILE *out;
     unsigned char *chunk = NULL;
     int chunkp;
+    int readred = 0;
 
     if (chunked > 0) chunk = malloc(chunked);
 
     if (chunked > 0 || chunked == -2) {
         char outname[64];
         strcpy(outname, filename);
+
         char *ext = strstr(outname, ".dat");
+
         if (ext == NULL) {
             fprintf(stderr, "Noncanonical file name\n");
             exit(0);
         }
+        
         if (chunked == -2) sprintf(ext, ".red");
         else sprintf(ext, ".%d", chunked);
         out = fopen(outname, "wb");
@@ -36,6 +40,8 @@ static int numbers(char *filename, int chunked) {
         } else fprintf(stderr, "Write : %s\n", outname);
     }
     
+    if (strstr(filename, ".red") != NULL && chunked == 0) readred = 1;
+    
     if (file == NULL) {
         fprintf(stderr, "Can't open file\n");
         exit(0);
@@ -44,50 +50,58 @@ static int numbers(char *filename, int chunked) {
         if (chunked == -1) fprintf(stderr, "Analyzing : %s\n", filename);
         
         while (fread(bytes, 1, 1, file) == 1) {
-            if (!chunked) printlf("%", number);
-            else if (chunked > 0) {
-                memset(chunk, 0, chunked);
-                chunkp = 1;
-            }
-                    
-            divisors = bytes[0];
-            if (chunked > 0) chunk[0] = bytes[0];
-
-            factors = 0;
-            if (divisors == 0) {
-                if (!chunked) printf(" P\n");
-                        
+            
+            if (readred) {
+                printlf("%", number);
+                printf(":%d\n", (int)bytes[0]);
+                
             } else {
-                numsize = 1;
-                if (!chunked) printf("=");
-                        
-                for (int i = 0; i < divisors; i++) {
-                    int divisor = fread(bytes, 1, 10, file);
-                    long factor;
-                    int size = flex_open(bytes, &factor);
-                    int exponent = bytes[size];
-                    factors += exponent;
-                    if (chunked > 0) {
-                        memcpy(chunk + chunkp, bytes, size + 1);
-                        chunkp += size + 1;
-                    }
-                    fseek(file, size + 1 - divisor, SEEK_CUR);
-
-                    if (!chunked) {
-                        printlf(" %", factor);
-                        printf("^%d", exponent);
-                    }
-                    numsize += size + 1;
+                if (!chunked) {
+                    printlf("%", number);
+                } else if (chunked > 0) {
+                    memset(chunk, 0, chunked);
+                    chunkp = 1;
                 }
-                if (numsize > maxsize) maxsize = numsize;
-                if (!chunked) printf("\n");
-            }
-            if (chunked > 0) fwrite(chunk, 1, chunked, out);
-            if (chunked == -2) {
-                bytes[0] = factors;
-                fwrite(bytes, 1, 1, out);
-            }
+                    
+                divisors = bytes[0];
+                if (chunked > 0) chunk[0] = bytes[0];
 
+                factors = 0;
+                if (divisors == 0) {
+                    if (!chunked) printf(" P\n");
+                        
+                } else {
+                    numsize = 1;
+                    if (!chunked) printf("=");
+                        
+                    for (int i = 0; i < divisors; i++) {
+                        int divisor = fread(bytes, 1, 10, file);
+                        long factor;
+                        int size = flex_open(bytes, &factor);
+                        int exponent = bytes[size];
+                        factors += exponent;
+                        if (chunked > 0) {
+                            memcpy(chunk + chunkp, bytes, size + 1);
+                            chunkp += size + 1;
+                        }
+                        fseek(file, size + 1 - divisor, SEEK_CUR);
+
+                        if (!chunked) {
+                            printlf(" %", factor);
+                            printf("^%d", exponent);
+                        }
+                        numsize += size + 1;
+                    }
+                    if (numsize > maxsize) maxsize = numsize;
+                    if (!chunked) printf("\n");
+                }
+                if (chunked > 0) fwrite(chunk, 1, chunked, out);
+                if (chunked == -2) {
+                    bytes[0] = factors;
+                    fwrite(bytes, 1, 1, out);
+                }
+            }
+            
             number++;
 
             if ((number % 1000000) == 0) fspin(stderr, number);
@@ -104,7 +118,7 @@ int main (int argc, char **argv) {
     if (argc == 1 || argv[1][0] == '?') {
         printf("Options\n");
         printf("\tp\tprint known primes\n");
-        printf("\t<file>\tprint a Numbers file\n");
+        printf("\t<file>\tprint a Numbers file (.dat or .red)\n");
         printf("\tc\twrite a Chunked version\n");
         printf("\tr\twrite a Reduced version\n");
         
