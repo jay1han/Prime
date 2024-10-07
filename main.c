@@ -33,7 +33,10 @@ int main (int argc, char **argv) {
     dont_run = argc == 0;
     
     for (int i = 0; i < argc; i++) {
-        if (argv[i][0] == 'i') is_init = 1;
+        if (argv[i][0] == 'i') {
+            is_init = 1;
+            do_numbers = FORMAT_NONE;
+        }
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 'n') do_numbers = FORMAT_PLAIN;
         else if (argv[i][0] == 'r') do_numbers = FORMAT_DEGREE;
@@ -67,6 +70,7 @@ int main (int argc, char **argv) {
         printf("\t+<num>\tstart from <num> (do numbers only)\n");
         printf("\tt<num>\tthreads\n");
         printf("\tn\twrite numbers.dat\n");
+        printf("\tr\twrite numbers.red\n");
         printf("\ts<num>\tspan of computation\n");
         printf("\t?\tdon't run, show parameters\n");
     }
