@@ -121,8 +121,11 @@ int main(int argc, char **argv) {
     
     char filename[64];
     sprintf(filename, "%s.", NUMBERS);
-    sprintlf(filename, "%-%.dat", first, last);
+    sprintlf(filename, "%-%.", first, last);
+    if (selector == selred) strcat(filename, "red");
+    else strcat(filename, "dat");
     printf("Output %s\n", filename);
+    
     if (argc > 1 && argv[1][0] == '?') exit(0);
     
     FILE *output = fopen(filename, "wb");
@@ -131,32 +134,45 @@ int main(int argc, char **argv) {
     for (int i = 0; i < spans; i++) {
         FILE *input = fopen(span[i].filename, "rb");
 
-        printf("Analyzing %s : ", span[i].filename);
-        printlf(" % - %\n", span[i].first, span[i].last);
+        if (selector == selred) {
+            printf("Copying %s : ", span[i].filename);
+            printlf(" % - %\n", span[i].first, span[i].last);
 
-        long number = span[i].first;
-        while (number <= span[i].last) {
-            if ((i < spans - 1) && (number >= span[i + 1].first)) break;
-
-            if (fread(bytes, 1, 1, input) < 1) {
-                printf("File too short, needs repair\n");
-                exit(0);
-            }
-            fwrite(bytes, 1, 1, output);
+            void *buffer = malloc(1<<20);
+            int size;
+            do {
+                size = fread(buffer, 1, 1<<20, input);
+                fwrite(buffer, 1, size, output);
+            } while (size == 1<<20);
             
-            int divisors = bytes[0];
-            for (int i = 0; i < divisors; i++) {
-                int divisor = fread(bytes, 1, 10, input);
-                long factor;
-                int size = flex_open(bytes, &factor);
-                fseek(input, size + 1 - divisor, SEEK_CUR);
-                fwrite(bytes, 1, size + 1, output);
-            }
-            number++;
+        } else {
+            printf("Analyzing %s : ", span[i].filename);
+            printlf(" % - %\n", span[i].first, span[i].last);
 
-            if ((number % 1000000) == 0) fspin(stdout, number);
+            long number = span[i].first;
+            while (number <= span[i].last) {
+                if ((i < spans - 1) && (number >= span[i + 1].first)) break;
+
+                if (fread(bytes, 1, 1, input) < 1) {
+                    printf("File too short, needs repair\n");
+                    exit(0);
+                }
+                fwrite(bytes, 1, 1, output);
+            
+                int divisors = bytes[0];
+                for (int i = 0; i < divisors; i++) {
+                    int divisor = fread(bytes, 1, 10, input);
+                    long factor;
+                    int size = flex_open(bytes, &factor);
+                    fseek(input, size + 1 - divisor, SEEK_CUR);
+                    fwrite(bytes, 1, size + 1, output);
+                }
+                number++;
+
+                if ((number % 1000000) == 0) fspin(stdout, number);
+            }
         }
-            
+        
         fclose(input);
         fflush(output);
         unlink(span[i].filename);
