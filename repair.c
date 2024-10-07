@@ -61,11 +61,13 @@ int main(int argc, char **argv) {
             rename(argv[1], outfile);
         }
 
-        struct stat filestat;
-        stat(outfile, &filestat);
-        if (filestat.st_size > pos) {
-            int x = truncate(outfile, pos);
-            printlf("Truncated from % to %\n", (long)filestat.st_size, pos);
+        if (filetype == 1) {
+            struct stat filestat;
+            stat(outfile, &filestat);
+            if (filestat.st_size > pos) {
+                int x = truncate(outfile, pos);
+                printlf("Truncated from % to %\n", (long)filestat.st_size, pos);
+            }
         }
     }
 }
