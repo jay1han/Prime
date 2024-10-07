@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
             }
             number++;
 
-            if ((number % 1000000) == 0) fspin(stdout, number);
+            if ((number % 1000000) == 0) fspin(stderr, number);
         }
             
         fclose(input);
