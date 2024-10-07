@@ -4,12 +4,12 @@
 
 A strictly positive integer can be written as a product of primes.
 
-N = &Pi;<sub>i</sub> p<sub>i</sub><sup>k</sup>
+N = &Pi;<sub>i</sub> p<sub>i</sub><sup>k<sub>i</sub></sup>
 
-Each prime divisor can be present once (k = 1) of multiple times (k > 1).
+Each prime divisor can be present multiple times (k<sub>i</sub> > 1).
 The *degree* of the integer is the sum of the exponents of its prime factors.
 
-*d*<sub>N</sub> = &Sigma;<sub>i</sub> k<sub>i</sub>
+d(N) = &Sigma;<sub>i</sub> k<sub>i</sub>
 
 So for a prime number, the degree is 1 (itself, exponentiated once);
 for 65536 which is 2<sup>8</sup>, the degree is 8.
@@ -83,9 +83,9 @@ N = &Pi;<sub>i</sub> p<sub>i</sub><sup>k</sup>
 
 - Each integer starts with one byte denoting the number of divisors. For each divisor
 
-  - p<sub>i</sub> is written in flexint
+    - p<sub>i</sub> is written in flexint
 
-  - and k<sub>i</sub> as a single byte
+    - and k<sub>i</sub> as a single byte
 
 This representation is very compact but because the length is variable, it's impossible to directly access an arbitrary number.
 The "chunked" variant is named `Numbers.X-Y.Z`, where Z is a small integer (the "chunk" size).
@@ -108,60 +108,79 @@ in one byte per number.
 
 ## Visualization
 
-Let's define the function &delta;(*n*) as the degree of the prime decomposition for each integer n.
-Let's plot the &delta;(*n*) of all integers within a certain range, say ]0;100][^1].
+Let's define the function d(*n*) as the degree of the prime decomposition for each integer n.
+Let's plot the d(*n*) of all integers within a certain range, say ]0;100][^1].
 Prime numbers within that range will be at the bottom (degree = 1),
 while powers of 2, which have the highest degree, will "tentpole" the graph.
 
-[^1]: We will set &delta;(1)=0.
+[^1]: We will set d(1)=0.
 
 Now reduce the scale of *n* by a factor of 2.
-This is like plotting &delta;(*2x*) for *x* &isin; &Nopf;/2.
+This is like plotting d(*2x*) for *x* &isin; &Nopf;/2.
 We notice that each point on the previous graph now has a point one step higher,
 since for any *n* &isin; &Nopf;, *2n* has one more prime factor, namely 2.
 
-So let's plot &delta;(*2x*)-1 instead. Now all the points on the previous graph
+So let's plot d(*2x*)-1 instead. Now all the points on the previous graph
 are also present in the new graph, and there are more points in between.
 But when *2x* is prime, the point lies on *y=0*.
 We need a slightly different transformation.
 
-Partially define a function &lambda;(*n*) for *n* &isin; &Nopf; such that
+Partially define a function R(*n*) for *n* &isin; &Nopf; such that
 
-- &lambda;<sub>2</sub>(*n*) = &delta;(*n*) / &delta;(*2n*)
+- R<sub>2</sub>(*n*) = d(*n*) / d(*2n*)
 
-- &lambda;<sub>2</sub>((*2n-1*)/2) = 1/2
+- R<sub>2</sub>((*2n-1*)/2) = 1/2
 
-Then, we define the function &delta;<sub>2</sub>(*x*) = &lambda;<sub>2</sub>(*x*) . &delta;(*2x*),
+Then, we define the function d<sub>2</sub>(*x*) = R<sub>2</sub>(*x*) . d(*2x*),
 we have the following properties:
 
-- for every *n* &isin; &Nopf;, &delta;<sub>2</sub>(*n*) = &delta;(*n*)
+- for every *n* &isin; &Nopf;, d<sub>2</sub>(*n*) = d(*n*)
 
-- for *x* &isin; (&Nopf;/2 - &Nopf;), &delta;<sub>2</sub>(*x*) = &delta;(*2x*)/2[^2]
+- for *x* &isin; (&Nopf;/2 - &Nopf;), d<sub>2</sub>(*x*) = d(*2x*)/2[^2]
 
-[^2]: So &delta;<sub>2</sub>(1/2) = 0.
+[^2]: So d<sub>2</sub>(1/2) = 0.
 
-Likewise, we can define &lambda;<sub>p</sub> for any prime *p*:
+Likewise, we can define R<sub>p</sub> for any prime *p*:
 
-- &lambda;<sub>p</sub>(*n*) = &delta;(*n*) / &delta;(*p.n*)
+- R<sub>p</sub>(*n*) = d(*n*) / d(*p.n*)
 
-- &lambda;<sub>p</sub>((*p.n-i*)/*p*) = 1 / *p*, for all *i* &isin; [1;*p-1*]
+- R<sub>p</sub>((*p.n-i*)/*p*) = 1 / *p*, for all *i* &isin; [1;*p-1*]
 
 To clear up the notation, let's call (for any prime *p*):
 
-- &delta;<sup>0</sup><sub>p</sub> = &delta;
+- d<sup>0</sup><sub>p</sub> = d
 
-- &lambda;<sup>1</sup><sub>p</sub> = &lambda;<sub>p</sub>
+- R<sup>1</sup><sub>p</sub> = R<sub>p</sub>
 
 We then define the *k*-times repeated applications of the scale reduction:
-for any prime *p* and *k* &isin; &Nopf;,
+for any prime *p* and any *k* &isin; &Nopf;,
 
-- &lambda;<sup>k</sup><sub>p</sub>(*n*) = &delta;<sup>k-1</sup><sub>p</sub>(*n*) / &delta;<sup>k-1</sup><sub>p</sub>(*p.n*)
+- R<sup>k</sup><sub>p</sub>(*n*) = d<sup>k-1</sup><sub>p</sub>(*n*) / d<sup>k-1</sup><sub>p</sub>(*p.n*)
 
-- &lambda;<sup>k</sup><sub>p</sub>((*p.n-i*)/*p*) = 1 / *p*, for all *i* &isin; [1;*p-1*]
+- R<sup>k</sup><sub>p</sub>((*p.n-i*)/*p*) = 1 / *p*, for all *i* &isin; [1;*p-1*]
 
-- &delta;<sup>k</sup><sub>p</sub>(*x*) = &lambda;<sup>k</sup><sub>p</sub>(*x*) . &delta;<sup>k-1</sup><sub>p</sub>(*p.x*)
+- d<sup>k</sup><sub>p</sub>(*x*) = R<sup>k</sup><sub>p</sub>(*x*) . d<sup>k-1</sup><sub>p</sub>(*p.x*)
 
-We want to visualize the graphs of &delta;<sup>k</sup><sub>p</sub> for successive values of *k*,
+We want to visualize the graphs of d<sup>k</sup><sub>p</sub> for successive values of *k*,
 and possibly stack those graphs in the third dimension with different values of *p*.
-Then, we'll visualize the graphs of &lambda;<sup>k</sup><sub>p</sub> and see if we can find
-more interesting definitions for *x* &notin; &Nopf;.
+
+We will also study the graphs of R<sup>k</sup><sub>p</sub> and see if we can find
+more interesting definitions for *x* &notin; &Nopf;. This function is given at all *n.p* points,
+but we need to define its value for the other values of *x*.
+
+In general, d(*p.n*) = d(*n*) + 1
+
+So, R<sup>k</sup><sub>p</sub>(*n*) = d<sup>k-1</sup><sub>p</sub>(*n*) / (d<sup>k-1</sup><sub>p</sub>(*n*) + 1)
+
+If *n* is further divisible by *p*, we can continue developing the sequence at *k-2* etc., until *n* is coprime with *p*.
+
+That is, if *n* = *m*.*p<sup>q</sup>* and *m* is coprime with *p*,
+
+R<sup>q</sup><sub>p</sub>(*n*)
+= (d(*m*) / (d(*m*) + 1)) . ((d(*m*) + 1) / (d(*m*) + 2)) ... ((d(*m*) + q - 1) / (d(*m*) + q))
+= d(*m*) / (d(*m*) + q)
+
+Also, R<sup>k</sup><sub>p</sub>(*n*) is meaningless for *k* > *q*,
+because d<sup>k</sup><sub>p</sub>(*m*) does not exist for those values of *k*.
+
+In fact, for *n* &isin; &Nopf;, R<sup>k</sup><sub>p</sub>(*p.n*) = d<sub>p</sub>(*n*) . &Pi;<sub>k</sub>
