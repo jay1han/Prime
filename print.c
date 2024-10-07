@@ -5,6 +5,7 @@
 #include "number.h"
 #include "flexint.h"
 #include "worker.h"
+#include "longint.h"
 
 static int numbers(char *filename, int chunked) {
     long number = 2;

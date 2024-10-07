@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include "number.h"
 #include "flexint.h"
+#include "longint.h"
 
 int main(int argc, char **argv) {
     if (argc == 1 || argv[1][0] == '?') {

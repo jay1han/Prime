@@ -7,6 +7,7 @@
 #include "prime.h"
 #include "number.h"
 #include "flexint.h"
+#include "longint.h"
 
 // Object-like structure to retrieve contiguous list of primes
 // The list is the data, and callers use an iterator to go through the list

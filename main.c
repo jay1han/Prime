@@ -7,6 +7,7 @@
 #include "worker.h"
 #include "prime.h"
 #include "number.h"
+#include "longint.h"
 
 static long upto = 1e6;
 static long from = 2;
@@ -14,7 +15,7 @@ static long span = 1e5;
 static char numbers_data[64] = "Numbers.";
 
 static int cores = 8;
-static int do_numbers = 0;
+static int do_numbers = FORMAT_PLAIN;
 static int dont_run = 0;
 static int is_init = 0;
 
@@ -34,7 +35,8 @@ int main (int argc, char **argv) {
     for (int i = 0; i < argc; i++) {
         if (argv[i][0] == 'i') is_init = 1;
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
-        else if (argv[i][0] == 'n') do_numbers = 1;
+        else if (argv[i][0] == 'n') do_numbers = FORMAT_PLAIN;
+        else if (argv[i][0] == 'r') do_numbers = FORMAT_DEGREE;
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
         else if (argv[i][0] == '+') {
             sscanf(&argv[i][1], "%lu", &from);
@@ -88,7 +90,13 @@ int main (int argc, char **argv) {
     printlf("Calculate  %  to  %  in spans of  % ", next, upto, span);
     printf(" on %d threads", cores);
     if (do_numbers) {
-        sprintlf(numbers_data, "%-%.dat", next, upto);
+        sprintlf(numbers_data, "%-%", next, upto);
+        switch (do_numbers) {
+        case FORMAT_PLAIN: strcat(numbers_data, ".dat"); break;
+        case FORMAT_INDEX: strcat(numbers_data, ".dxt"); break;
+        case FORMAT_DEGREE: strcat(numbers_data, ".red"); break;
+        default: exit(0);
+        }
         unlink(numbers_data);
         printf(" >%s", numbers_data);
     }

@@ -1,6 +1,6 @@
 CC := gcc -c -O3 -ggdb -MMD -MF
 LD := gcc
-COMMON := prime.o worker.o number.o flexint.o
+COMMON := prime.o worker.o number.o flexint.o longint.o
 ALLOBJECTS := main.o print.o merge.o repair.o $(COMMON)
 
 all: primes print merge repair

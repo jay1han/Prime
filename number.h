@@ -5,6 +5,11 @@
 
 #include <stdarg.h>
 
+#define FORMAT_NONE   0
+#define FORMAT_PLAIN  1
+#define FORMAT_INDEX  2
+#define FORMAT_DEGREE 3
+
 // Inialize the numbers list
 void numbers_init(
     long first,  // the first number in this list
@@ -52,22 +57,5 @@ void number_done(
     );
 
 void number_print(long number);
-
-// Print longs
-void printl(long num);
-void fprintl(FILE *out, long num);
-void printlf(char *fmt, ...);
-void fprintlf(FILE *out, char *fmt, ...);
-void printpf(char *fmr, ...);
-void fprintpf(FILE *out, char *fmr, ...);
-int sprintl(char *output, long num);
-void sprintlf(char *output, char *fmt, ...);
-void printtf(char *fmt, ...);
-
-// Scan a punctuated long
-void sscanl(char *input, long *value);
-
-// Show a spinner
-void fspin(FILE *out, long number);
 
 #endif

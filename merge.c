@@ -8,12 +8,25 @@
 #include "number.h"
 #include "flexint.h"
 #include "worker.h"
+#include "longint.h"
 
 #define NUMBERS "Numbers"
 
-static int selnum(const struct dirent *dir) {
+static void help() {
+    printf("Options\n");
+    printf("\tn\tuse .dat files\n");
+    printf("\tr\tuse .red files\n");
+    exit(0);
+}
+
+static int seldat(const struct dirent *dir) {
     return (strncmp(dir->d_name, NUMBERS, strlen(NUMBERS)) == 0) &&
         (strstr(dir->d_name, ".dat") != NULL);
+}
+
+static int selred(const struct dirent *dir) {
+    return (strncmp(dir->d_name, NUMBERS, strlen(NUMBERS)) == 0) &&
+        (strstr(dir->d_name, ".red") != NULL);
 }
 
 typedef struct span_s {
@@ -36,11 +49,19 @@ static int compspan(const void *a, const void *b) {
 
 int main(int argc, char **argv) {
     struct dirent **p_dirlist;
-    int num_files = scandir(".", &p_dirlist, selnum, NULL);
     struct statvfs dirstat;
     long totalsize = 0;
     long maxsize = 0;
+    int (*selector)(const struct dirent*);
 
+    if (argc == 1) help();
+    else {
+        if (argv[1][0] == 'n') selector = seldat;
+        else if (argv[1][0] == 'r') selector = selred;
+        else help();
+    }
+
+    int num_files = scandir(".", &p_dirlist, selector, NULL);
     if (num_files <= 1) {
         printf("Nothing to merge\n");
         exit(0);
