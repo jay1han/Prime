@@ -97,6 +97,11 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
             fprintf(stderr, "No Primes file\n");
             exit(0);
         }
+
+        for (int i = 1; i < num_files; i++) {
+            fprintf(stderr, "Remove unused %s\n", p_dirlist[i]->d_name);
+            unlink(p_dirlist[i]->d_name);
+        }
         
         char *filename = p_dirlist[0]->d_name;
         if (strcmp(filename, self.filename) == 0) self.filename[0] = 0;
