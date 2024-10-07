@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     if (argc == 1 || argv[1][0] == '?') {
         
     } else {
-        char outfile[64];
+        char outfile[64] = "";
         int filetype = 0;
         
         long first, last;
@@ -56,8 +56,11 @@ int main(int argc, char **argv) {
             number--;
             printlf("Found up to  %  <  %. Renaming to : Numbers.%-%.dat\n",
                     number, last, first, number);
-            
-            sprintlf(outfile, "Numbers.%-%.dat", first, number);
+
+            outfile[0] = 0;
+            sprintlf(outfile, "Numbers.%-%.", first, number);
+            if (filetype == 1) strcat(outfile, "dat");
+            else if (filetype == 2) strcat(outfile, "red");
             rename(argv[1], outfile);
         }
 
