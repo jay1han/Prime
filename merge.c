@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
             if ((i < spans - 1) && (number >= span[i + 1].first)) break;
 
             if (fread(bytes, 1, 1, input) < 1) {
-                printf("File too short\n");
+                printf("File too short, needs repair\n");
                 exit(0);
             }
             fwrite(bytes, 1, 1, output);
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
             }
             number++;
 
-            if ((number % 1000000) == 0) printlf("  %\r", number);
+            if ((number % 1000000) == 0) fspin(stdout, number);
         }
             
         fclose(input);

@@ -67,4 +67,7 @@ void printtf(char *fmt, ...);
 // Scan a punctuated long
 void sscanl(char *input, long *value);
 
+// Show a spinner
+void fspin(FILE *out, long number);
+
 #endif

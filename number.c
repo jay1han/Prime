@@ -256,3 +256,13 @@ void printtf(char *fmt, ...) {
     }
     va_end(args);
 }
+
+static char spinner[] = "|/-\\";
+
+void fspin(FILE *out, long number) {
+    static int spin = 0;
+
+    fprintf(out, "%c", spinner[spin]);
+    fprintlf(out, " %\r", number);
+    if (++spin == 4) spin = 0;
+}

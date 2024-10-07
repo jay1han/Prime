@@ -7,13 +7,10 @@
 #include "number.h"
 #include "flexint.h"
 
-static char spinner[] = "|/-\\";
-
 int main(int argc, char **argv) {
     if (argc == 1 || argv[1][0] == '?') {
         
     } else {
-        int spin = 0;
         char outfile[64];
         
         long first, last;
@@ -34,11 +31,7 @@ int main(int argc, char **argv) {
                 fseek(file, size + 1 - divisor, SEEK_CUR);
             }
 
-            if ((number % 1000000) == 0) {
-                printf("%c", spinner[spin]);
-                printlf(" %\r", number);
-                if (++spin == 4) spin = 0;
-            }
+            if ((number % 1000000) == 0) fspin(stdout, number);
             pos = ftell(file);
         }
         fclose(file);
