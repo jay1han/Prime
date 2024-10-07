@@ -36,7 +36,11 @@ int main (int argc, char **argv) {
         else if (argv[i][0] == 't') sscanf(&argv[i][1], "%d", &cores);
         else if (argv[i][0] == 'n') do_numbers = 1;
         else if (argv[i][0] == 's') sscanf(&argv[i][1], "%lu", &span);
-        else if (argv[i][0] == '+') sscanf(&argv[i][1], "%lu", &from);
+        else if (argv[i][0] == '+') {
+            sscanf(&argv[i][1], "%lu", &from);
+            if (argv[i][strlen(argv[i]) - 1] == 'g') from *= 1e9;
+            if (argv[i][strlen(argv[i]) - 1] == 'm') from *= 1e6;
+        }
         else if (argv[i][0] >= '1' && argv[i][0] <= '9') {
             sscanf(argv[i], "%lu", &upto);
             if (argv[i][strlen(argv[i]) - 1] == 'g') upto *= 1e9;
