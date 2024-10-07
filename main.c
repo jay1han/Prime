@@ -107,7 +107,10 @@ int main (int argc, char **argv) {
     else printf(" no numbers");
     if (is_init) printf(" INIT");
     printf("\n");
-    if (dont_run) return 0;
+    if (dont_run) {
+        primes_close(1);
+        exit(0);
+    }
     
     time_t start = time(NULL);
     if (is_init) {
