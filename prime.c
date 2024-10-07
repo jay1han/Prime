@@ -28,6 +28,7 @@ static struct {
     seq_t *sequences;             // Pool of sequences
     int threads;                  // Max number of threads (sequences)
     long count;                   // Number of primes
+    long new;                     // Number of new primes (determines whether to write)
     long last;                    // Largest known prime
     long upto;
     char filename[64];
@@ -61,6 +62,7 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
     self.part = 0;
     self.offset = 0;
     self.count = 0;
+    self.new = 0;
     self.last = 0;
     self.upto = upto;
     self.bytes[0] = malloc(PART);
@@ -130,6 +132,7 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
 void primes_add(long prime) {
     if (prime <= self.last) return;
 
+    self.new++;
     self.offset += flex_fold(prime - self.last, &self.bytes[self.part][self.offset]);
     self.count++;
     if (self.offset > PART - 10) {
@@ -233,6 +236,7 @@ inline long primes_size() {
 // Write a list of primes
 void primes_write() {
     if (!self.file) return;
+    if (!self.new) return;
     
     if (self.written.part == self.part)
         fwrite(self.bytes[self.written.part] + self.written.offset, 1,

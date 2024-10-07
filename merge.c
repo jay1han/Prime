@@ -3,6 +3,8 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/statvfs.h>
 #include "prime.h"
 #include "number.h"
 #include "flexint.h"
@@ -18,6 +20,7 @@ static int selnum(const struct dirent *dir) {
 typedef struct span_s {
     long first, last;
     char filename[64];
+    long filesize;
 } span_t;
 static span_t span[100];
 static int spans = 0;
@@ -35,6 +38,9 @@ static int compspan(const void *a, const void *b) {
 int main(int argc, char **argv) {
     struct dirent **p_dirlist;
     int num_files = scandir(".", &p_dirlist, selnum, NULL);
+    struct statvfs dirstat;
+    long totalsize = 0;
+    long maxsize = 0;
 
     if (num_files <= 1) {
         printf("Nothing to merge\n");
@@ -49,19 +55,32 @@ int main(int argc, char **argv) {
     for (int i = 0; i < num_files; i++) {
         char *filename = p_dirlist[i]->d_name;
         long first, last;
+        struct stat filestat;
 
         sscanl(strchr(filename, '.') + 1, &first);
         sscanl(strchr(filename, '-') + 1, &last);
         span[spans].first = first;
         span[spans].last = last;
         strcpy(span[spans].filename, filename);
+        stat(filename, &filestat);
+        span[spans].filesize = filestat.st_size;
+        totalsize += filestat.st_size;
+        if (filestat.st_size > maxsize) maxsize = filestat.st_size;
         spans++;
     }
 
     qsort(span, spans, sizeof(span_t), compspan);
     for (int i = 0; i < spans; i++) {
         printf("%s :", span[i].filename);
-        printlf(" % - %\n", span[i].first, span[i].last);
+        printlf(" % - % ", span[i].first, span[i].last);
+        printpf(": %\n", span[i].filesize);
+    }
+
+    statvfs(".", &dirstat);
+    if (dirstat.f_bsize * dirstat.f_bfree <= maxsize * 2) {
+        printpf("File size % too large for remaining %\n",
+                maxsize, dirstat.f_bsize * dirstat.f_bfree);
+        exit(0);
     }
 
     for (int i = 1; i < spans; i++) {
@@ -119,6 +138,8 @@ int main(int argc, char **argv) {
         }
             
         fclose(input);
+        fflush(output);
+        unlink(span[i].filename);
     }
     fclose(output);
     printf("Output %s : ", filename);
