@@ -264,5 +264,6 @@ void fspin(FILE *out, long number) {
 
     fprintf(out, "%c", spinner[spin]);
     fprintlf(out, " %\r", number);
+    fflush(out);
     if (++spin == 4) spin = 0;
 }
