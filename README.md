@@ -127,11 +127,11 @@ We need a slightly different transformation.
 
 Partially define a function &lambda;(*n*) for *n* &isin; &Nopf; such that
 
-- &lambda;~2~(*2n*) = &delta;(*n*) / &delta;(*2n*)
+- &lambda;~2~(*n*) = &delta;(*n*) / &delta;(*2n*)
 
-- &lambda;~2~(*2n-1*) = 1/2
+- &lambda;~2~((*2n-1*)/2) = 1/2
 
-Then, we define the function &delta;~2~(*x*) = &lambda;~2~(*2x*).&delta;(*2x*),
+Then, we define the function &delta;~2~(*x*) = &lambda;~2~(*x*) . &delta;(*2x*),
 we have the following properties:
 
 - for every *n* &isin; &Nopf;, &delta;~2~(*n*) = &delta;(*n*)
@@ -142,15 +142,26 @@ we have the following properties:
 
 Likewise, we can define &lambda;~p~ for any prime *p*:
 
-- &lambda;~p~(*p.n*) = &delta;(*n*)/&delta;(*p.n*)
+- &lambda;~p~(*n*) = &delta;(*n*) / &delta;(*p.n*)
 
-- &lambda;~p~(*p.n-i) = 1 / *p*), for all *i* &isin; [1;*p-1*]
+- &lambda;~p~((*p.n-i*)/*p*) = 1 / *p*, for all *i* &isin; [1;*p-1*]
 
-We can also define *k*-times repeated applications of the scale reduction: for *k* > 1,
+To clear up the notation, let's call (for any prime *p*):
 
-- &lambda;^k^~p~(*p.n*) = &delta;^k-1^~p~(*n*)/&delta;^k-1^~p~(*p.n*)
+- &delta;^0^~p~ = &delta;
 
-- &lambda;^k^~p~(*p.n-i*) = 1 / *p*^k^
+- &lambda;^1^~p~ = &lambda;~p~
+
+We then define the *k*-times repeated applications of the scale reduction:
+for any prime *p* and *k* &isin; &Nopf;,
+
+- &lambda;^k^~p~(*n*) = &delta;^k-1^~p~(*n*) / &delta;^k-1^~p~(*p.n*)
+
+- &lambda;^k^~p~((*p.n-i*)/*p*) = 1 / *p*, for all *i* &isin; [1;*p-1*]
+
+- &delta;^k^~p~(*x*) = &lambda;^k^~p~(*x*) . &delta;^k-1^~p~(*p.x*)
 
 We want to visualize the graphs of &delta;^k^~p~ for successive values of *k*,
 and possibly stack those graphs in the third dimension with different values of *p*.
+Then, we'll visualize the graphs of &lambda;^k^~p~ and see if we can find
+more interesting definitions for *x* &notin; &Nopf;.
