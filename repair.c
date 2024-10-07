@@ -13,25 +13,36 @@ int main(int argc, char **argv) {
         
     } else {
         char outfile[64];
+        int filetype = 0;
         
         long first, last;
         sscanl(strchr(argv[1], '.') + 1, &first);
         sscanl(strchr(argv[1], '-') + 1, &last);
+
+        if (strstr(argv[1], ".dat") != NULL) filetype = 1;
+        else if (strstr(argv[1], ".red") != NULL) filetype = 2;
+        else {
+            printf("Unknown file type %s\n", argv[1]);
+            exit(0);
+        }
 
         FILE *file = fopen(argv[1], "rb");
         unsigned char bytes[10];
         long pos = 0, number;
         for (number = first; number <= last; number++) {
             if (fread(bytes, 1, 1, file) != 1) break;
-            int divisors = bytes[0];
-            for (int i = 0; i < divisors; i++) {
-                int divisor = fread(bytes, 1, 10, file);
-                long factor;
-                int size = flex_open(bytes, &factor);
-                if (size + 1 > divisor) break;
-                fseek(file, size + 1 - divisor, SEEK_CUR);
+            
+            if (filetype == 1) {
+                int divisors = bytes[0];
+                for (int i = 0; i < divisors; i++) {
+                    int divisor = fread(bytes, 1, 10, file);
+                    long factor;
+                    int size = flex_open(bytes, &factor);
+                    if (size + 1 > divisor) break;
+                    fseek(file, size + 1 - divisor, SEEK_CUR);
+                }
             }
-
+            
             if ((number % 1000000) == 0) fspin(stdout, number);
             pos = ftell(file);
         }
