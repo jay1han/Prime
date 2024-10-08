@@ -160,11 +160,11 @@ int main(int argc, char **argv) {
                 fwrite(bytes, 1, 1, output);
             
                 int divisors = bytes[0];
-                for (int i = 0; i < divisors; i++) {
-                    int divisor = fread(bytes, 1, 10, input);
+                for (int divisor = 0; divisor < divisors; divisor++) {
+                    int content = fread(bytes, 1, 10, input);
                     long factor;
                     int size = flex_open(bytes, &factor);
-                    fseek(input, size + 1 - divisor, SEEK_CUR);
+                    fseek(input, size + 1 - content, SEEK_CUR);
                     fwrite(bytes, 1, size + 1, output);
                 }
                 number++;

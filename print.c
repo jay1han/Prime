@@ -74,8 +74,8 @@ static int numbers(char *filename, int chunked) {
                     numsize = 1;
                     if (!chunked) printf("=");
                         
-                    for (int i = 0; i < divisors; i++) {
-                        int divisor = fread(bytes, 1, 10, file);
+                    for (int divisor = 0; divisor < divisors; divisor++) {
+                        int content = fread(bytes, 1, 10, file);
                         long factor;
                         int size = flex_open(bytes, &factor);
                         int exponent = bytes[size];
@@ -84,7 +84,7 @@ static int numbers(char *filename, int chunked) {
                             memcpy(chunk + chunkp, bytes, size + 1);
                             chunkp += size + 1;
                         }
-                        fseek(file, size + 1 - divisor, SEEK_CUR);
+                        fseek(file, size + 1 - content, SEEK_CUR);
 
                         if (!chunked) {
                             printlf(" %", factor);
