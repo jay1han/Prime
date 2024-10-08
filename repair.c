@@ -34,13 +34,15 @@ int main(int argc, char **argv) {
             
             if (filetype == 1) {
                 int divisors = bytes[0];
-                for (int i = 0; i < divisors; i++) {
-                    int divisor = fread(bytes, 1, 10, file);
+                int divisor;
+                for (divisor = 0; divisor < divisors; divisor++) {
+                    int content = fread(bytes, 1, 10, file);
                     long factor;
                     int size = flex_open(bytes, &factor);
-                    if (size + 1 > divisor) break;
+                    if (size + 1 > content) break;
                     fseek(file, size + 1 - divisor, SEEK_CUR);
                 }
+                if (divisor < divisors) break;
             }
             
             if ((number % 1000000) == 0) fspin(stdout, number);
