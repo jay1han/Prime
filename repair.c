@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
                     long factor;
                     int size = flex_open(bytes, &factor);
                     if (size + 1 > content) break;
-                    fseek(file, size + 1 - divisor, SEEK_CUR);
+                    fseek(file, size + 1 - content, SEEK_CUR);
                 }
                 if (divisor < divisors) break;
             }
