@@ -1,10 +1,5 @@
+#include <stdio.h>
 #include "flexint.h"
-
-typedef struct flexint_s {
-    long number;
-    unsigned char flex[9];
-    int size;
-} flexint_t;
 
 inline int flex_fold(long number, unsigned char *bytes) {
     int count = 0;
@@ -114,5 +109,75 @@ inline int flex_open(unsigned char *bytes, long *value) {
     }
     
     *value = number;
+    return count;
+}
+
+inline int flex_read(FILE *file, long *value, unsigned char *buffer) {
+    long number;
+    int count = 0;
+    unsigned char byte;
+    unsigned char *bytes;
+    unsigned char mybuffer[9];
+
+    if (buffer != NULL) bytes = buffer;
+    else bytes = mybuffer;
+    
+    if (fread(bytes, 1, 1, file) != 1) return -1;
+
+    if (bytes[0] == 0xFF) {
+        if (fread(bytes + 1, 1, 8, file) != 8) return -1;
+        number = bytes[8] | ((long)bytes[7] << 8)
+            | ((long)bytes[6] << 16) | ((long)bytes[5] << 24)
+            | ((long)bytes[4] << 32) | ((long)bytes[3] << 40)
+            | ((long)bytes[2] << 48) | ((long)bytes[1] << 56);
+        return 9;
+    }
+    
+    number = bytes[0];
+    count++;
+    
+    if ((number & 0x80) != 0) {
+        if (fread(bytes + 1, 1, 1, file) != 1) return -1;
+        number = ((number & 0x7F) << 8) | bytes[1];
+        count++;
+    }
+
+    if ((number & 0x4000) != 0) {
+        if (fread(bytes + 2, 1, 1, file) != 1) return -1;
+        number = ((number & 0x3FFF) << 8) | bytes[2];
+        count++;
+    }
+
+    if ((number & 0x200000) != 0) {
+        if (fread(bytes + 3, 1, 1, file) != 1) return -1;
+        number = ((number & 0x1FFFFF) << 8) | bytes[3];
+        count++;
+    }
+    
+    if ((number & 0x10000000) != 0) {
+        if (fread(bytes + 4, 1, 1, file) != 1) return -1;
+        number = ((number & 0x0FFFFFFF) << 8) | bytes[4];
+        count++;
+    }
+    
+    if ((number & 0x0800000000) != 0) {
+        if (fread(bytes + 5, 1, 1, file) != 1) return -1;
+        number = ((number & 0x07FFFFFFFFL) << 8) | bytes[5];
+        count++;
+    }
+    
+    if ((number & 0x040000000000) != 0) {
+        if (fread(bytes + 6, 1, 1, file) != 1) return -1;
+        number = ((number & 0x03FFFFFFFFFFL) << 8) | bytes[6];
+        count++;
+    }
+    
+    if ((number & 0x02000000000000) != 0) {
+        if (fread(bytes + 7, 1, 1, file) != 1) return -1;
+        number = ((number & 0x01FFFFFFFFFFFFL) << 8) | bytes[7];
+        count++;
+    }
+
+    if (value != NULL) *value = number;
     return count;
 }

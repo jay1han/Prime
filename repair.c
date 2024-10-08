@@ -36,11 +36,8 @@ int main(int argc, char **argv) {
                 int divisors = bytes[0];
                 int divisor;
                 for (divisor = 0; divisor < divisors; divisor++) {
-                    int content = fread(bytes, 1, 10, file);
-                    long factor;
-                    int size = flex_open(bytes, &factor);
-                    if (size + 1 > content) break;
-                    fseek(file, size + 1 - content, SEEK_CUR);
+                    if (flex_read(file, NULL, NULL) < 0) break;
+                    if (fread(bytes, 1, 1, file) != 1) break;
                 }
                 if (divisor < divisors) break;
             }

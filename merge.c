@@ -12,6 +12,11 @@
 
 #define NUMBERS "Numbers"
 
+static void truncated() {
+    printf("Truncated file, needs repair\n");
+    exit(0);
+}
+
 static void help() {
     printf("Options\n");
     printf("\tn\tuse .dat files\n");
@@ -153,18 +158,14 @@ int main(int argc, char **argv) {
             while (number <= span[i].last) {
                 if ((i < spans - 1) && (number >= span[i + 1].first)) break;
 
-                if (fread(bytes, 1, 1, input) < 1) {
-                    printf("File too short, needs repair\n");
-                    exit(0);
-                }
+                if (fread(bytes, 1, 1, input) < 1) truncated();
                 fwrite(bytes, 1, 1, output);
             
                 int divisors = bytes[0];
-                for (int divisor = 0; divisor < divisors; divisor++) {
-                    int content = fread(bytes, 1, 10, input);
-                    long factor;
-                    int size = flex_open(bytes, &factor);
-                    fseek(input, size + 1 - content, SEEK_CUR);
+                for (int i = 0; i < divisors; i++) {
+                    int size = flex_read(input, NULL, bytes);
+                    if (size < 0) truncated();
+                    if (fread(bytes + size, 1, 1, input) != 1) truncated();
                     fwrite(bytes, 1, size + 1, output);
                 }
                 number++;

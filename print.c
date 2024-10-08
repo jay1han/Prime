@@ -7,11 +7,16 @@
 #include "worker.h"
 #include "longint.h"
 
+static void truncated() {
+    printf("Truncated file, needs repair\n");
+    exit(0);
+}
+
 static int numbers(char *filename, int chunked) {
     long number = 2;
     unsigned char bytes[256];
     int divisors;
-    int numsize, maxsize = 0, factors;
+    int numsize, maxsize = 0, degree;
     FILE *file = fopen(filename, "rb");
     FILE *out;
     unsigned char *chunk = NULL;
@@ -66,7 +71,7 @@ static int numbers(char *filename, int chunked) {
                 divisors = bytes[0];
                 if (chunked > 0) chunk[0] = bytes[0];
 
-                factors = 0;
+                degree = 0;
                 if (divisors == 0) {
                     if (!chunked) printf(" P\n");
                         
@@ -74,17 +79,16 @@ static int numbers(char *filename, int chunked) {
                     numsize = 1;
                     if (!chunked) printf("=");
                         
-                    for (int divisor = 0; divisor < divisors; divisor++) {
-                        int content = fread(bytes, 1, 10, file);
+                    for (int i = 0; i < divisors; i++) {
                         long factor;
-                        int size = flex_open(bytes, &factor);
+                        int size = flex_read(file, &factor, bytes);
+                        if (fread(&bytes[size], 1, 1, file) != 1) truncated();
                         int exponent = bytes[size];
-                        factors += exponent;
+                        degree += exponent;
                         if (chunked > 0) {
                             memcpy(chunk + chunkp, bytes, size + 1);
                             chunkp += size + 1;
                         }
-                        fseek(file, size + 1 - content, SEEK_CUR);
 
                         if (!chunked) {
                             printlf(" %", factor);
@@ -92,12 +96,13 @@ static int numbers(char *filename, int chunked) {
                         }
                         numsize += size + 1;
                     }
+                    
                     if (numsize > maxsize) maxsize = numsize;
                     if (!chunked) printf("\n");
                 }
                 if (chunked > 0) fwrite(chunk, 1, chunked, out);
                 if (chunked == -2) {
-                    bytes[0] = factors;
+                    bytes[0] = degree;
                     fwrite(bytes, 1, 1, out);
                 }
             }
