@@ -295,7 +295,7 @@ void primes_close(int cancel) {
 
 // Return a sequence
 void *seq_alloc(long size) {
-    seq_t *sequence;
+    seq_t *sequence = NULL;
     int i;
 
     for (i = 0; i < self.threads; i++) {
@@ -303,6 +303,10 @@ void *seq_alloc(long size) {
             sequence = &self.sequences[i];
             break;
         }
+    }
+    if (sequence == NULL) {
+        fprintf(stderr, "Panic: sequences\n");
+        exit(0);
     }
     
     sequence->offset = 0;
@@ -324,7 +328,8 @@ void primes_add_seq(void *arg) {
 
     for (int count = 0; count < sequence->offset; count++)
         primes_add(sequence->primes[count]);
-    
+
+    free(sequence->primes);
     sequence->primes = NULL;
 }
 
