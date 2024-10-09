@@ -15,7 +15,7 @@ static long span = 1e5;
 static char numbers_data[64] = "Numbers.";
 
 static int cores = 8;
-static int do_numbers = FORMAT_PLAIN;
+static int do_numbers = FORMAT_NONE;
 static int dont_run = 0;
 static int is_init = 0;
 
