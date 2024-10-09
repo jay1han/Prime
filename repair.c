@@ -8,68 +8,111 @@
 #include "flexint.h"
 #include "longint.h"
 
+#define NUMBERS   1
+#define REDUCED   2
+#define PRIMES    3
+
 int main(int argc, char **argv) {
     if (argc == 1 || argv[1][0] == '?') {
+        printf("Repairs Numbers..dat, Numbers..red and Primes..dat files\n");
         
     } else {
         char outfile[64] = "";
         int filetype = 0;
         
-        long first, last;
-        sscanl(strchr(argv[1], '.') + 1, &first);
-        sscanl(strchr(argv[1], '-') + 1, &last);
-
-        if (strstr(argv[1], ".dat") != NULL) filetype = 1;
-        else if (strstr(argv[1], ".red") != NULL) filetype = 2;
+        if (strstr(argv[1], ".dat") != NULL) {
+            if (strncmp(argv[1], "Primes", 6) == 0) filetype = PRIMES;
+            else filetype = NUMBERS;
+        } else if (strstr(argv[1], ".red") != NULL) filetype = REDUCED;
         else {
             printf("Unknown file type %s\n", argv[1]);
             exit(0);
         }
 
+        long first, last;
+        switch (filetype) {
+        case NUMBERS:
+        case REDUCED:
+            sscanl(strchr(argv[1], '.') + 1, &first);
+            sscanl(strchr(argv[1], '-') + 1, &last);
+            break;
+
+        case PRIMES:
+            first = 0;
+            sscanl(strchr(argv[1], '.') + 1, &last);
+            break;
+        }
+
         FILE *file = fopen(argv[1], "rb");
+        if (file == NULL) {
+            printf("File not found\n");
+            exit(0);
+        }
+        
         unsigned char bytes[10];
         long pos = 0, number;
+        int stop = 0;
         for (number = first; number <= last; number++) {
-            if (fread(bytes, 1, 1, file) != 1) break;
+            long step;
             
-            if (filetype == 1) {
-                int divisors = bytes[0];
-                int divisor;
-                for (divisor = 0; divisor < divisors; divisor++) {
-                    if (flex_read(file, NULL, NULL) < 0) break;
-                    if (fread(bytes, 1, 1, file) != 1) break;
+            switch (filetype) {
+            case PRIMES:
+                if (flex_read(file, &step, NULL) < 0) stop = 1;
+                else number += step - 1;
+                break;
+                
+            case REDUCED:
+                if (fread(bytes, 1, 1, file) != 1) stop = 1;
+                break;
+
+            case NUMBERS:
+                if (fread(bytes, 1, 1, file) != 1) stop = 1;
+                else {
+                    int divisors = bytes[0];
+                    for (int i = 0; i < divisors; i++) {
+                        if (flex_read(file, NULL, NULL) < 0) stop = 1;
+                        else if (fread(bytes, 1, 1, file) != 1) stop = 1;
+                    }
                 }
-                if (divisor < divisors) break;
             }
+            if (stop) break;
             
             if ((number % 1000000) == 0) fspin(stdout, number);
             pos = ftell(file);
         }
         fclose(file);
         
-        if (number > last) {
+        if (number >= last) {
             printlf("Found all of  %\n", last);
             strcpy(outfile, argv[1]);
             
         } else {
-            number--;
-            printlf("Found up to  %  <  %. Renaming to : Numbers.%-%.dat\n",
-                    number, last, first, number);
+            switch(filetype) {
+            case PRIMES:
+                sprintlf(outfile, "Primes.%.dat", number);
+                break;
 
-            outfile[0] = 0;
-            sprintlf(outfile, "Numbers.%-%.", first, number);
-            if (filetype == 1) strcat(outfile, "dat");
-            else if (filetype == 2) strcat(outfile, "red");
+            case REDUCED:
+                sprintlf(outfile, "Numbers.%-%.red", first, number);
+                number--;
+                break;
+
+            case NUMBERS:
+                sprintlf(outfile, "Numbers.%-%.dat", first, number);
+                number--;
+                break;
+            }
+            
+            printlf("Found up to  %  <  %. Renaming to : ", number, last);
+            printf("%s\n", outfile);
             rename(argv[1], outfile);
         }
-
-        if (filetype == 1) {
-            struct stat filestat;
-            stat(outfile, &filestat);
-            if (filestat.st_size > pos) {
-                int x = truncate(outfile, pos);
-                printlf("Truncated from % to %\n", (long)filestat.st_size, pos);
-            }
+        
+        struct stat filestat;
+        stat(outfile, &filestat);
+        if (filestat.st_size > pos) {
+            int x = truncate(outfile, pos);
+            printlf("Truncated from % to %\n", (long)filestat.st_size, pos);
         }
     }
 }
