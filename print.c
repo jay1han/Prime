@@ -82,6 +82,7 @@ static int numbers(char *filename, int chunked) {
                     for (int i = 0; i < divisors; i++) {
                         long factor;
                         int size = flex_read(file, &factor, bytes);
+                        if (size < 0) truncated();
                         if (fread(&bytes[size], 1, 1, file) != 1) truncated();
                         int exponent = bytes[size];
                         degree += exponent;
@@ -155,6 +156,7 @@ int main (int argc, char **argv) {
                 else sscanf(argv[2], "%d", &chunked);
                 
                 if (chunked > 0) fprintf(stderr, "Chunk to %d bytes. ", chunked);
+                if (chunked == -2) fprintf(stderr, "Reduce\n");
                 numbers(argv[1], chunked);
             } else numbers(argv[1], 0);
         }
