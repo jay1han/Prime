@@ -272,6 +272,7 @@ void primes_print() {
 
     while ((prime = prime_next(iterator, NULL)) != 0)
         printlf("%\n", prime);
+    prime_end(iterator);
 }
 
 // Erase previous files
