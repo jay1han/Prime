@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "prime.h"
 #include "number.h"
 #include "flexint.h"
 #include "worker.h"
 #include "longint.h"
+
+static time_t start;
 
 static void truncated() {
     printf("Truncated file, needs repair\n");
@@ -57,12 +60,12 @@ static int numbers(char *filename, int chunked) {
         while (fread(bytes, 1, 1, file) == 1) {
             
             if (readred) {
-                printlf("%", number);
+                fprintlf(stdout, "%", number);
                 printf(":%d\n", (int)bytes[0]);
                 
             } else {
                 if (!chunked) {
-                    printlf("%", number);
+                    fprintlf(stdout, "%", number);
                 } else if (chunked > 0) {
                     memset(chunk, 0, chunked);
                     chunkp = 1;
@@ -92,7 +95,7 @@ static int numbers(char *filename, int chunked) {
                         }
 
                         if (!chunked) {
-                            printlf(" %", factor);
+                            fprintlf(stdout, " %", factor);
                             printf("^%d", exponent);
                         }
                         numsize += size + 1;
@@ -110,7 +113,11 @@ static int numbers(char *filename, int chunked) {
             
             number++;
 
-            if ((number % 1000000) == 0) fspin(stderr, number);
+            if ((number % 1000000) == 0) {
+                fprintt(stderr, start);
+                fprintlf(stderr, "  %\r", number);
+                fflush(stderr);
+            }
         }
         fclose(file);
 
@@ -136,11 +143,16 @@ int main (int argc, char **argv) {
             void *prime = prime_new();
             long step, maxstep = 0;
             long factor = prime_next(prime, &step);
+            start = time(NULL);
             
             while (factor != 0) {
                 if (step > maxstep) maxstep = step;
-                printlf("%\n", factor);
-                if ((factor % 1000000) == 0) fspin(stderr, factor);
+                fprintlf(stdout, "%\n", factor);
+                if ((factor % 1000000) == 0) {
+                    fprintt(stderr, start);
+                    fprintlf(stderr, "  %\r", factor);
+                    fflush(stderr);
+                }
                 factor = prime_next(prime, &step);
             }
             prime_end(prime);

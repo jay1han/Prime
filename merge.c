@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <time.h>
 #include "number.h"
 #include "flexint.h"
 #include "worker.h"
@@ -97,14 +98,14 @@ int main(int argc, char **argv) {
     qsort(span, spans, sizeof(span_t), compspan);
     for (int i = 0; i < spans; i++) {
         printf("%s :", span[i].filename);
-        printlf(" % - % ", span[i].first, span[i].last);
-        printpf(": %\n", span[i].filesize);
+        fprintlf(stdout, " % - % ", span[i].first, span[i].last);
+        fprintpf(stdout, ": %\n", span[i].filesize);
     }
 
     statvfs(".", &dirstat);
     if (dirstat.f_bsize * dirstat.f_bfree <= maxsize * 2) {
-        printpf("File size % too large for remaining %\n",
-                maxsize, dirstat.f_bsize * dirstat.f_bfree);
+        fprintpf(stdout, "File size % too large for remaining %\n",
+                 maxsize, dirstat.f_bsize * dirstat.f_bfree);
         exit(0);
     }
 
@@ -135,13 +136,14 @@ int main(int argc, char **argv) {
     
     FILE *output = fopen(filename, "wb");
 
+    time_t start = time(NULL);
     unsigned char bytes[256];
     for (int i = 0; i < spans; i++) {
         FILE *input = fopen(span[i].filename, "rb");
 
         if (selector == selred) {
             printf("Copying %s : ", span[i].filename);
-            printlf(" % - %\n", span[i].first, span[i].last);
+            fprintlf(stdout, " % - %\n", span[i].first, span[i].last);
 
             void *buffer = malloc(1<<20);
             int size;
@@ -152,7 +154,7 @@ int main(int argc, char **argv) {
             
         } else {
             printf("Analyzing %s : ", span[i].filename);
-            printlf(" % - %\n", span[i].first, span[i].last);
+            fprintlf(stdout, " % - %\n", span[i].first, span[i].last);
 
             long number = span[i].first;
             while (number <= span[i].last) {
@@ -170,7 +172,11 @@ int main(int argc, char **argv) {
                 }
                 number++;
 
-                if ((number % 1000000) == 0) fspin(stdout, number);
+                if ((number % 1000000) == 0) {
+                    fprintt(stdout, start);
+                    fprintlf(stdout, "  %\r", number);
+                    fflush(stdout);
+                }
             }
         }
         
@@ -180,7 +186,7 @@ int main(int argc, char **argv) {
     }
     fclose(output);
     printf("Output %s : ", filename);
-    printlf(" % - %\n", first, last);
+    fprintlf(stdout, " % - %\n", first, last);
 
     for (int i = 0; i < spans; i++) unlink(span[i].filename);
 }

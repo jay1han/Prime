@@ -103,17 +103,17 @@ void number_done(void *arg) {
 
 void number_print(long number) {
     if (self.last == 0 || number < self.first || number > self.last) {
-        printlf("% is not in the list\n", number);
+        fprintlf(stdout, "% is not in the list\n", number);
         return;
     }
     
     number_t *this = &self.numbers[number - self.first];
 
-    if (this->divisors == 0) printlf("% P\n", number);
+    if (this->divisors == 0) fprintlf(stdout, "% P\n", number);
     else {
-        printlf("%=", number);
+        fprintlf(stdout, "%=", number);
         for (int i = 0; i < this->divisors; i++) {
-            printlf(" %", this->factors[i].factor);
+            fprintlf(stdout, " %", this->factors[i].factor);
             printf("^%d", this->factors[i].exponent);
         }
         printf("\n");

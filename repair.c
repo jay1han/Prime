@@ -4,6 +4,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <time.h>
 #include "number.h"
 #include "flexint.h"
 #include "longint.h"
@@ -52,6 +53,9 @@ int main(int argc, char **argv) {
         unsigned char bytes[10];
         long pos = 0, number;
         int stop = 0;
+        time_t start = time(NULL);
+        fprintf(stdout, "Start\r");
+        
         for (number = first; number <= last; number++) {
             long step;
             
@@ -77,13 +81,17 @@ int main(int argc, char **argv) {
             }
             if (stop) break;
             
-            if ((number % 1000000) == 0) fspin(stdout, number);
+            if ((number % 1000000) == 0) {
+                fprintt(stdout, start);
+                fprintlf(stdout, "  %\r", number);
+                fflush(stdout);
+            }
             pos = ftell(file);
         }
         fclose(file);
         
         if (number >= last) {
-            printlf("Found all of  %\n", last);
+            fprintlf(stdout, "\nFound all of  %\n", last);
             strcpy(outfile, argv[1]);
             
         } else {
@@ -103,7 +111,7 @@ int main(int argc, char **argv) {
                 break;
             }
             
-            printlf("Found up to  %  <  %. Renaming to : ", number, last);
+            fprintlf(stdout, "\nFound up to  %  <  %.  Renaming to :  ", number, last);
             printf("%s\n", outfile);
             rename(argv[1], outfile);
         }
@@ -112,7 +120,7 @@ int main(int argc, char **argv) {
         stat(outfile, &filestat);
         if (filestat.st_size > pos) {
             int x = truncate(outfile, pos);
-            printlf("Truncated from % to %\n", (long)filestat.st_size, pos);
+            fprintlf(stdout, "Truncated size from  %  to  %\n", (long)filestat.st_size, pos);
         }
     }
 }

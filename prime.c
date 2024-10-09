@@ -110,7 +110,7 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
         sscanl(strchr(filename, '.') + 1, &previous);
 
         if (do_print) {
-            fprintf(stderr, "%s up to ", filename);
+            fprintf(stderr, "%s  up to ", filename);
             fprintlf(stderr, " % ", previous);
             fflush(stderr);
         }
@@ -129,8 +129,8 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
         primes_scan(self.bytes[self.part], self.offset);
         
         if (do_print) {
-            fprintlf(stderr, ": % primes, last %,", self.count, self.last);
-            fprintpf(stderr, " RAM %\n", primes_size());
+            fprintlf(stderr, " :  %  primes, last  %,", self.count, self.last);
+            fprintpf(stderr, "  RAM %\n", primes_size());
         }
     }
 
@@ -271,7 +271,7 @@ void primes_print() {
     long prime;
 
     while ((prime = prime_next(iterator, NULL)) != 0)
-        printlf("%\n", prime);
+        fprintlf(stdout, "%\n", prime);
     prime_end(iterator);
 }
 

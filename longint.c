@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 #include "longint.h"
 
 int sprintl(char *output, long num) {
@@ -23,13 +24,6 @@ int sprintl(char *output, long num) {
     
     strcpy(output, temp);
     return strlen(temp);
-}
-
-void printl(long num) {
-    char temp[32];
-
-    sprintl(temp, num);
-    printf("%s", temp);
 }
 
 void fprintl(FILE *out, long num) {
@@ -55,19 +49,6 @@ void sprintlf(char *output, char *fmt, ...) {
     *target = 0;
 }
 
-void printlf(char *fmt, ...) {
-    va_list(args);
-    char *source;
-
-    va_start(args, fmt);
-    for (source = fmt; *source != 0; source++) {
-        if (*source == '%') {
-            printl(va_arg(args, long));
-        } else printf("%c", *source);
-    }
-    va_end(args);
-}
-
 void fprintlf(FILE *out, char *fmt, ...) {
     va_list(args);
     char *source;
@@ -77,22 +58,6 @@ void fprintlf(FILE *out, char *fmt, ...) {
         if (*source == '%') {
             fprintl(out, va_arg(args, long));
         } else fprintf(out, "%c", *source);
-    }
-    va_end(args);
-}
-
-void printpf(char *fmt, ...) {
-    va_list(args);
-    char *source;
-
-    va_start(args, fmt);
-    for (source = fmt; *source != 0; source++) {
-        if (*source == '%') {
-            long value = va_arg(args, long);
-            if (value < 1e6) printf("%.3lfK", (double)value / 1e3);
-            else if (value < 1e9) printf("%.3lfM", (double)value / 1e6);
-            else printf("%.3lfG", (double)value / 1e9);
-        } else printf("%c", *source);
     }
     va_end(args);
 }
@@ -130,33 +95,13 @@ void sscanl(char *input, long *value) {
     *value = number;
 }
 
-void printtf(char *fmt, ...) {
-    va_list(args);
-    char *source;
-
-    va_start(args, fmt);
-    for (source = fmt; *source != 0; source++) {
-        if (*source == '%') {
-            long sec = va_arg(args, long);
-            long hours = sec / 3600;
-            sec -= hours * 3600;
-            long mins = sec / 60;
-            sec -= mins * 60;
-            if (hours > 0) printf("%ldh %02ldm %02lds", hours, mins, sec);
-            else if (mins > 0) printf("%ldm %02lds", mins, sec);
-            else printf("%lds", sec);
-        } else printf("%c", *source);
-    }
-    va_end(args);
-}
-
-static char spinner[] = "|/-\\";
-
-void fspin(FILE *out, long number) {
-    static int spin = 0;
-
-    fprintf(out, "%c", spinner[spin]);
-    fprintlf(out, " %\r", number);
-    fflush(out);
-    if (++spin == 4) spin = 0;
+void fprintt(FILE *out, time_t from) {
+    long sec = time(NULL) - from;
+    long hours = sec / 3600;
+    sec -= hours * 3600;
+    long mins = sec / 60;
+    sec -= mins * 60;
+    if (hours > 0) fprintf(out, " %ldh %02ldm %02lds", hours, mins, sec);
+    else if (mins > 0) fprintf(out, " %ldm %02lds", mins, sec);
+    else fprintf(out, " %lds", sec);
 }
