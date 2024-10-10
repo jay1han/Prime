@@ -166,16 +166,13 @@ int main (int argc, char **argv) {
         primes_write();
         
         long latest = primes_count();
-        double this_d = d_since(&this_s);
         long remaining_steps = (upto - next) / (span * cores);
-        double eta = this_d * remaining_steps;
 
         printf(" [");
         fprintt(stdout, time(NULL) - start);
         printf("]%5.1f%%", 100.0 - 100.0 * remaining_steps / total_steps);
         fprintlf(stdout, " .. %  :  %  primes. ETA ", first, latest);
-        if (eta > 0.0) fprintt(stdout, eta);
-        else printf("unknown");
+        fprintt(stdout, remaining_steps * d_since(&this_s));
         printf("          \r");
         fflush(stdout);
     }
