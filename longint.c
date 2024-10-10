@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
+#include <sys/time.h>
 #include "longint.h"
 
 int sprintl(char *output, long num) {
@@ -62,20 +63,10 @@ void fprintlf(FILE *out, char *fmt, ...) {
     va_end(args);
 }
 
-void fprintpf(FILE *out, char *fmt, ...) {
-    va_list(args);
-    char *source;
-
-    va_start(args, fmt);
-    for (source = fmt; *source != 0; source++) {
-        if (*source == '%') {
-            long value = va_arg(args, long);
-            if (value < 1e6) fprintf(out, "%.3lfK", (double)value / 1e3);
-            else if (value < 1e9) fprintf(out, "%.3lfM", (double)value / 1e6);
-            else fprintf(out, "%.3lfG", (double)value / 1e9);
-        } else fprintf(out, "%c", *source);
-    }
-    va_end(args);
+void fprintp(FILE *out, long value) {
+    if (value < 1e6) fprintf(out, "%.3lfK", (double)value / 1e3);
+    else if (value < 1e9) fprintf(out, "%.3lfM", (double)value / 1e6);
+    else fprintf(out, "%.3lfG", (double)value / 1e9);
 }
 
 void sscanl(char *input, long *value) {
@@ -95,13 +86,19 @@ void sscanl(char *input, long *value) {
     *value = number;
 }
 
-void fprintt(FILE *out, time_t from) {
-    long sec = time(NULL) - from;
+void fprintt(FILE *out, long sec) {
     long hours = sec / 3600;
     sec -= hours * 3600;
     long mins = sec / 60;
     sec -= mins * 60;
-    if (hours > 0) fprintf(out, " %ldh %02ldm %02lds", hours, mins, sec);
-    else if (mins > 0) fprintf(out, " %ldm %02lds", mins, sec);
-    else fprintf(out, " %lds", sec);
+    if (hours > 0) fprintf(out, "%ldh %02ldm %02lds", hours, mins, sec);
+    else if (mins > 0) fprintf(out, "%ldm %02lds", mins, sec);
+    else fprintf(out, "%lds", sec);
+}
+
+double d_since(struct timeval *since) {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return (double)(now.tv_sec - since->tv_sec)
+        + (double)(now.tv_usec - since->tv_usec) / 1e6;
 }

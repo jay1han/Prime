@@ -82,7 +82,8 @@ int main(int argc, char **argv) {
             if (stop) break;
             
             if ((number % 1000000) == 0) {
-                fprintt(stdout, start);
+                printf("  ");
+                fprintt(stdout, time(NULL) - start);
                 fprintlf(stdout, "  %\r", number);
                 fflush(stdout);
             }

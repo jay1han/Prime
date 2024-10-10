@@ -129,8 +129,9 @@ long primes_init(int threads, int is_init, long upto, int do_print) {
         primes_scan(self.bytes[self.part], self.offset);
         
         if (do_print) {
-            fprintlf(stderr, " :  %  primes, last  %,", self.count, self.last);
-            fprintpf(stderr, "  RAM %\n", primes_size());
+            fprintlf(stderr, " :  %  primes, last  %,  RAM ", self.count, self.last);
+            fprintp(stderr, primes_size());
+            fprintf(stderr, "\n");
         }
     }
 

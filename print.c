@@ -114,7 +114,8 @@ static int numbers(char *filename, int chunked) {
             number++;
 
             if ((number % 1000000) == 0) {
-                fprintt(stderr, start);
+                printf("  ");
+                fprintt(stderr, time(NULL) - start);
                 fprintlf(stderr, "  %\r", number);
                 fflush(stderr);
             }
@@ -149,7 +150,8 @@ int main (int argc, char **argv) {
                 if (step > maxstep) maxstep = step;
                 fprintlf(stdout, "%\n", factor);
                 if ((factor % 1000000) == 0) {
-                    fprintt(stderr, start);
+                    printf("  ");
+                    fprintt(stderr, time(NULL) - start);
                     fprintlf(stderr, "  %\r", factor);
                     fflush(stderr);
                 }

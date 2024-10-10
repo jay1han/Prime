@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/time.h>
 #include "worker.h"
 #include "prime.h"
 #include "number.h"
@@ -109,7 +110,7 @@ int main (int argc, char **argv) {
         primes_close(1);
         exit(0);
     }
-    
+
     time_t start = time(NULL);
     if (is_init) {
         primes_add(2);
@@ -126,10 +127,16 @@ int main (int argc, char **argv) {
         }
     }
 
+    from = next;
+    long total_steps = (upto - from) / (span * cores);
+    
     while (next <= upto) {
-        long first = next;
         long sofar = primes_count();
+        long first = next;
         int threads;
+        
+        struct timeval this_s;
+        gettimeofday(&this_s, NULL);
 
         if (do_numbers) {
             if (next + span * cores - 1 > upto) numbers_init(next, upto);
@@ -152,26 +159,35 @@ int main (int argc, char **argv) {
         for (int thread = 0; thread < threads; thread++)
             primes_add_seq(sequence[thread]);
         
-        long latest = primes_count();
-        fprintt(stdout, start);
-        fprintlf(stdout, "  Span  % - %  :  %  new primes, total  %\r",
-                 first, next - 1, latest - sofar, latest);
-        fflush(stdout);
         if (do_numbers) {
             numbers_write(numbers_data, do_numbers);
             numbers_close();
         }
         primes_write();
+        
+        long latest = primes_count();
+        double this_d = d_since(&this_s);
+        long remaining_steps = (upto - next) / (span * cores);
+        double eta = this_d * remaining_steps;
+
+        printf(" [");
+        fprintt(stdout, time(NULL) - start);
+        printf("]%5.1f%%", 100.0 - 100.0 * remaining_steps / total_steps);
+        fprintlf(stdout, " .. %  :  %  primes. ETA ", first, latest);
+        if (eta > 0.0) fprintt(stdout, eta);
+        else printf("unknown");
+        printf("          \r");
+        fflush(stdout);
     }
 
-    fprintlf(stdout, "\nTotal  % primes last = % ", primes_count(), primes_last());
-    fprintpf(stdout, " RAM usage %\n", primes_size());
+    fprintlf(stdout, "\nTotal  %  primes last =  %.  RAM ", primes_count(), primes_last());
+    fprintp(stdout, primes_size());
+    printf(".  Time ");
+    fprintt(stdout, time(NULL) - start);
+    printf("\n");
     primes_write();
     primes_close(0);
 
-    printf("Calculation time ");
-    fprintt(stdout, time(NULL) - start);
-    printf("\n");
     
     return 0;
 }

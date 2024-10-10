@@ -98,14 +98,18 @@ int main(int argc, char **argv) {
     qsort(span, spans, sizeof(span_t), compspan);
     for (int i = 0; i < spans; i++) {
         printf("%s :", span[i].filename);
-        fprintlf(stdout, " % - % ", span[i].first, span[i].last);
-        fprintpf(stdout, ": %\n", span[i].filesize);
+        fprintlf(stdout, " % - % : ", span[i].first, span[i].last);
+        fprintp(stdout, span[i].filesize);
+        printf("\n");
     }
 
     statvfs(".", &dirstat);
     if (dirstat.f_bsize * dirstat.f_bfree <= maxsize * 2) {
-        fprintpf(stdout, "File size % too large for remaining %\n",
-                 maxsize, dirstat.f_bsize * dirstat.f_bfree);
+        printf("File size ");
+        fprintp(stdout, maxsize);
+        printf(" too large for remaining ");
+        fprintp(stdout, dirstat.f_bsize * dirstat.f_bfree);
+        printf("\n");
         exit(0);
     }
 
@@ -173,7 +177,7 @@ int main(int argc, char **argv) {
                 number++;
 
                 if ((number % 1000000) == 0) {
-                    fprintt(stdout, start);
+                    fprintt(stdout, time(NULL) - start);
                     fprintlf(stdout, "  %\r", number);
                     fflush(stdout);
                 }
