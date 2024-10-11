@@ -20,6 +20,7 @@ float d_since(struct timeval *since);
 void *d_new();
 void d_add(void *arg, float value);
 float d_avg(void *arg);
+int d_n(void *arg);
 void d_reset(void *arg);
 void d_end(void *arg);
 

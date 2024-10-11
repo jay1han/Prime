@@ -145,7 +145,6 @@ int main (int argc, char **argv) {
     struct timeval t_this;
     float d_this, d_prev = 0;
     void *d_base = d_new(), *d_step = d_new();
-    int decile = 0;
 
     while (next <= upto) {
         long sofar = primes_count();
@@ -184,8 +183,7 @@ int main (int argc, char **argv) {
         long latest = primes_count();
         long remaining_steps = (upto - next) / (span * cores);
         float percent = 100.0 - 100.0 * remaining_steps / total_steps;
-        if (percent > 10.0 * decile) {
-            decile++;
+        if (d_n(d_base) > 100) {
             d_reset(d_base);
             d_reset(d_step);
         }

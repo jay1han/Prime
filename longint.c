@@ -126,11 +126,16 @@ float d_avg(void *arg) {
     return d->avg;
 }
 
+int d_n(void *arg) {
+    d_t *d = (d_t*)arg;
+    return d->n;
+}
+
 void d_end(void *arg) {
     free(arg);
 }
 
 void d_reset(void *arg) {
     d_t *d = (d_t*)arg;
-    d->n /= 2;
+    d->n /= 10;
 }
