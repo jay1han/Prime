@@ -64,9 +64,9 @@ void fprintlf(FILE *out, char *fmt, ...) {
 }
 
 void fprintp(FILE *out, long value) {
-    if (value < 1e6) fprintf(out, "%.3lfK", (double)value / 1e3);
-    else if (value < 1e9) fprintf(out, "%.3lfM", (double)value / 1e6);
-    else fprintf(out, "%.3lfG", (double)value / 1e9);
+    if (value < 1e6) fprintf(out, "%.3lfK", (float)value / 1e3);
+    else if (value < 1e9) fprintf(out, "%.3lfM", (float)value / 1e6);
+    else fprintf(out, "%.3lfG", (float)value / 1e9);
 }
 
 void sscanl(char *input, long *value) {
@@ -96,9 +96,41 @@ void fprintt(FILE *out, long sec) {
     else fprintf(out, "%lds", sec);
 }
 
-double d_since(struct timeval *since) {
+float d_since(struct timeval *since) {
     struct timeval now;
     gettimeofday(&now, NULL);
-    return (double)(now.tv_sec - since->tv_sec)
-        + (double)(now.tv_usec - since->tv_usec) / 1e6;
+    return (float)(now.tv_sec - since->tv_sec)
+        + (float)(now.tv_usec - since->tv_usec) / 1e6;
+}
+
+typedef struct {
+    int n;
+    float avg;
+} d_t;
+
+void *d_new() {
+    d_t *d = malloc(sizeof(d_t));
+    d->n = 0;
+    d->avg = 0;
+    return (void*)d;
+}
+
+void d_add(void *arg, float value) {
+    d_t *d = (d_t*)arg;
+    d->avg = ((d->avg * d->n) + value) / (d->n + 1);
+    d->n++;
+}
+
+float d_avg(void *arg) {
+    d_t *d = (d_t*)arg;
+    return d->avg;
+}
+
+void d_end(void *arg) {
+    free(arg);
+}
+
+void d_reset(void *arg) {
+    d_t *d = (d_t*)arg;
+    d->n /= 2;
 }

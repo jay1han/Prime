@@ -15,7 +15,7 @@ static long from = 2;
 static long span = 1e5;
 static char numbers_data[64] = "Numbers.";
 
-static int cores = 8;
+static int cores = 4;
 static int do_numbers = FORMAT_NONE;
 static int dont_run = 0;
 static int is_init = 0;
@@ -27,6 +27,18 @@ int main (int argc, char **argv) {
     void *sequence[16];
     long next;
 
+    FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
+    char key[80];
+    while (!feof(cpuinfo)) {
+        int processor;
+        if (fscanf(cpuinfo, "%s", key) == 0) continue;
+        if (strcmp(key, "processor") == 0) {
+            if (fscanf(cpuinfo, " : %d", &processor) == 0) continue;
+            cores = processor + 1;
+        }
+    }
+    fclose(cpuinfo);
+    
     argv++;
     argc--;
     dont_run = argc == 0;
@@ -52,7 +64,7 @@ int main (int argc, char **argv) {
         }
         else dont_run = 1;
     }
-    
+
     if (cores > 16) cores = 16;
     if (upto < 1e6) upto = 1e6;
     if (span < 1e4) span = 1e4;
@@ -130,14 +142,18 @@ int main (int argc, char **argv) {
     from = next;
     long total_steps = (upto - from) / (span * cores);
     
+    struct timeval t_this;
+    float d_this, d_prev = 0;
+    void *d_base = d_new(), *d_step = d_new();
+    int decile = 0;
+
     while (next <= upto) {
         long sofar = primes_count();
         long first = next;
         int threads;
         
-        struct timeval this_s;
-        gettimeofday(&this_s, NULL);
-
+        gettimeofday(&t_this, NULL);
+        
         if (do_numbers) {
             if (next + span * cores - 1 > upto) numbers_init(next, upto);
             else numbers_init(next, next + span * cores - 1);
@@ -164,15 +180,31 @@ int main (int argc, char **argv) {
             numbers_close();
         }
         primes_write();
-        
+
         long latest = primes_count();
         long remaining_steps = (upto - next) / (span * cores);
+        float percent = 100.0 - 100.0 * remaining_steps / total_steps;
+        if (percent > 10.0 * decile) {
+            decile++;
+            d_reset(d_base);
+            d_reset(d_step);
+        }
 
+        long eta = 0;
+        d_this = d_since(&t_this);
+        d_add(d_base, d_this);
+        d_add(d_step, (d_this - d_prev) / d_avg(d_base));
+        eta = (long) (
+            d_avg(d_base) * remaining_steps *
+            (1.0 + d_avg(d_step) * remaining_steps / 2)
+            );
+        d_prev = d_this;
+        
         printf(" [");
         fprintt(stdout, time(NULL) - start);
-        printf("]%5.1f%%", 100.0 - 100.0 * remaining_steps / total_steps);
+        printf("]%5.1f%%", percent);
         fprintlf(stdout, " .. %  :  %  primes. ETA ", first, latest);
-        fprintt(stdout, remaining_steps * d_since(&this_s));
+        fprintt(stdout, eta);
         printf("          \r");
         fflush(stdout);
     }
