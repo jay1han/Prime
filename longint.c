@@ -104,7 +104,7 @@ float d_since(struct timeval *since) {
 }
 
 typedef struct {
-    int n;
+    int n, rel;
     float avg;
 } d_t;
 
@@ -112,6 +112,7 @@ void *d_new() {
     d_t *d = malloc(sizeof(d_t));
     d->n = 0;
     d->avg = 0;
+    d->rel = 0;
     return (void*)d;
 }
 
@@ -131,6 +132,11 @@ int d_n(void *arg) {
     return d->n;
 }
 
+int d_rel(void *arg) {
+    d_t *d = (d_t*)arg;
+    return d->rel;
+}
+
 void d_end(void *arg) {
     free(arg);
 }
@@ -138,4 +144,5 @@ void d_end(void *arg) {
 void d_reset(void *arg) {
     d_t *d = (d_t*)arg;
     d->n /= 10;
+    d->rel++;
 }
