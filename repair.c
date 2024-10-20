@@ -18,6 +18,7 @@ int main(int argc, char **argv) {
         printf("Repairs Numbers..dat, Numbers..red and Primes..dat files\n");
         
     } else {
+        struct stat filestat;
         char outfile[64] = "";
         int filetype = 0;
         
@@ -30,7 +31,8 @@ int main(int argc, char **argv) {
             exit(0);
         }
 
-        long first, last;
+        long first, last, number, pos;
+	
         switch (filetype) {
         case NUMBERS:
         case REDUCED:
@@ -44,52 +46,64 @@ int main(int argc, char **argv) {
             break;
         }
 
-        FILE *file = fopen(argv[1], "rb");
-        if (file == NULL) {
-            printf("File not found\n");
-            exit(0);
-        }
+	
+	if (filetype == REDUCED) {
+	    stat(argv[1], &filestat);
+	    number = first + filestat.st_size;
+	} else {
+	    FILE *file = fopen(argv[1], "rb");
+	    if (file == NULL) {
+		printf("File not found\n");
+		exit(0);
+	    }
         
-        unsigned char bytes[10];
-        long pos = 0, number;
-        int stop = 0;
-        time_t start = time(NULL);
-        fprintf(stdout, "Start\r");
-        
-        for (number = first; number <= last; number++) {
-            long step;
-            
-            switch (filetype) {
-            case PRIMES:
-                if (flex_read(file, &step, NULL) < 0) stop = 1;
-                else number += step - 1;
-                break;
-                
-            case REDUCED:
-                if (fread(bytes, 1, 1, file) != 1) stop = 1;
-                break;
+	    time_t start = time(NULL);
+	    fprintf(stdout, "Start\r");
 
-            case NUMBERS:
-                if (fread(bytes, 1, 1, file) != 1) stop = 1;
-                else {
-                    int divisors = bytes[0];
-                    for (int i = 0; i < divisors; i++) {
-                        if (flex_read(file, NULL, NULL) < 0) stop = 1;
-                        else if (fread(bytes, 1, 1, file) != 1) stop = 1;
-                    }
-                }
-            }
-            if (stop) break;
+	    unsigned char bytes[10];
+	    int stop = 0, size, flexsize;
+	    
+	    for (number = first; number <= last; number++) {
+		long step;
             
-            if ((number % 1000000) == 0) {
-                printf("  ");
-                fprintt(stdout, time(NULL) - start);
-                fprintlf(stdout, "  %\r", number);
-                fflush(stdout);
-            }
-            pos = ftell(file);
-        }
-        fclose(file);
+		switch (filetype) {
+		case PRIMES:
+		    if ((flexsize = flex_read(file, &step, NULL)) < 0) stop = 1;
+		    else {
+			number += step - 1;
+			pos += flexsize;
+		    }
+		    break;
+                
+		case NUMBERS:
+		    if (fread(bytes, 1, 1, file) != 1) stop = 1;
+		    else {
+			size = 1;
+			int divisors = bytes[0];
+			for (int i = 0; i < divisors; i++) {
+			    if ((flexsize = flex_read(file, NULL, NULL)) < 0) stop = 1;
+			    else {
+				if (fread(bytes, 1, 1, file) != 1) stop = 1;
+				else size += flexsize + 1;
+			    }
+			}
+			if (!stop) pos += size;
+		    }
+		}
+		if (stop) break;
+            
+		if ((number % 1000000) == 0) {
+		    printf("  ");
+		    fprintt(stdout, time(NULL) - start);
+		    fprintlf(stdout, "  %\r", number);
+		    fflush(stdout);
+		}
+		pos = ftell(file);
+	    }
+	    
+	    number--;
+	    fclose(file);
+	}
         
         if (number >= last) {
             fprintlf(stdout, "\nFound all of  %\n", last);
@@ -103,12 +117,10 @@ int main(int argc, char **argv) {
 
             case REDUCED:
                 sprintlf(outfile, "Numbers.%-%.red", first, number);
-                number--;
                 break;
 
             case NUMBERS:
                 sprintlf(outfile, "Numbers.%-%.dat", first, number);
-                number--;
                 break;
             }
             
@@ -117,7 +129,6 @@ int main(int argc, char **argv) {
             rename(argv[1], outfile);
         }
         
-        struct stat filestat;
         stat(outfile, &filestat);
         if (filestat.st_size > pos) {
             int x = truncate(outfile, pos);

@@ -19,9 +19,11 @@ static void truncated() {
 }
 
 static void help() {
-    printf("Options\n");
+    printf("First argument\n");
     printf("\tn\tuse .dat files\n");
     printf("\tr\tuse .red files\n");
+    printf("Second argument (optional)\n");
+    printf("\t<dir>\toutput directory\n");
     exit(0);
 }
 
@@ -59,9 +61,11 @@ int main(int argc, char **argv) {
     long totalsize = 0;
     long maxsize = 0;
     int (*selector)(const struct dirent*);
+    char *outdir = ".";
 
     if (argc == 1) help();
     else {
+	if (argc > 2) outdir = argv[2];
         if (argv[1][0] == 'n') selector = seldat;
         else if (argv[1][0] == 'r') selector = selred;
         else help();
@@ -98,6 +102,14 @@ int main(int argc, char **argv) {
     qsort(span, spans, sizeof(span_t), compspan);
     for (int i = 0; i < spans; i++) {
         printf("%s :", span[i].filename);
+	if (i > 0) {
+            if (span[i].first <= span[i-1].last)
+                span[i-1].last = span[i].first - 1;
+            else if (span[i].first > span[i-1].last + 1) {
+                printf("Disjoint files\n");
+                exit(0);
+            }
+        }
         fprintlf(stdout, " % - % : ", span[i].first, span[i].last);
         fprintp(stdout, span[i].filesize);
         printf("\n");
@@ -113,13 +125,6 @@ int main(int argc, char **argv) {
         exit(0);
     }
 
-    for (int i = 1; i < spans; i++) {
-        if (span[i].last < span[i + 1].first -1) {
-            printf("Disjoint files\n");
-            exit(0);
-        }
-    }
-
     long first = span[0].first;
     long last = span[spans - 1].last;
     
@@ -129,8 +134,8 @@ int main(int argc, char **argv) {
         exit(0);
     }
     
-    char filename[64];
-    sprintf(filename, "%s.", NUMBERS);
+    char filename[128];
+    sprintf(filename, "%s/%s.", outdir, NUMBERS);
     sprintlf(filename, "%-%.", first, last);
     if (selector == selred) strcat(filename, "red");
     else strcat(filename, "dat");
@@ -155,6 +160,7 @@ int main(int argc, char **argv) {
                 size = fread(buffer, 1, 1<<20, input);
                 fwrite(buffer, 1, size, output);
             } while (size == 1<<20);
+	    free(buffer);
             
         } else {
             printf("Analyzing %s : ", span[i].filename);
