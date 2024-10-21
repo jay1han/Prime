@@ -100,19 +100,13 @@ int main(int argc, char **argv) {
     }
 
     qsort(span, spans, sizeof(span_t), compspan);
-    for (int i = 0; i < spans; i++) {
-        printf("%s :", span[i].filename);
-	if (i > 0) {
-            if (span[i].first <= span[i-1].last)
-                span[i-1].last = span[i].first - 1;
-            else if (span[i].first > span[i-1].last + 1) {
-                printf("Disjoint files\n");
-                exit(0);
-            }
+    for (int i = 1; i < spans; i++) {
+        if (span[i].first <= span[i-1].last) 
+            span[i-1].last = span[i].first - 1;
+        else if (span[i].first > span[i-1].last + 1) {
+            printf("Disjoint files\n");
+            exit(0);
         }
-        fprintlf(stdout, " % - % : ", span[i].first, span[i].last);
-        fprintp(stdout, span[i].filesize);
-        printf("\n");
     }
 
     statvfs(".", &dirstat);
@@ -155,11 +149,17 @@ int main(int argc, char **argv) {
             fprintlf(stdout, " % - %\n", span[i].first, span[i].last);
 
             void *buffer = malloc(1<<20);
-            int size;
+            int copy, actual, size = span[i].last - span[i].first + 1;
             do {
-                size = fread(buffer, 1, 1<<20, input);
-                fwrite(buffer, 1, size, output);
-            } while (size == 1<<20);
+                if (size < (1<<20)) copy = size;
+                else copy = 1<<20;
+                if ((actual = fread(buffer, 1, copy, input)) < copy) {
+                    printf("File too small, please repair\n");
+                    exit(0);
+                }
+                fwrite(buffer, 1, copy, output);
+                size -= copy;
+            } while (size > 0);
 	    free(buffer);
             
         } else {
