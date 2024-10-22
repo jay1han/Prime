@@ -49,7 +49,9 @@ int main(int argc, char **argv) {
 	
 	if (filetype == REDUCED) {
 	    stat(argv[1], &filestat);
-	    number = first + filestat.st_size;
+	    number = first + filestat.st_size - 1;
+            pos = number - first + 1;
+            
 	} else {
 	    FILE *file = fopen(argv[1], "rb");
 	    if (file == NULL) {
