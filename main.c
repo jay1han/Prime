@@ -143,8 +143,8 @@ int main (int argc, char **argv) {
     long total_steps = (upto - from) / (span * cores);
     
     struct timeval t_this;
-    float d_this, d_prev = 0;
-    void *d_base = d_new(), *d_step = d_new();
+    float d_this;
+    void *d_base = d_new();
 
     while (next <= upto) {
         long sofar = primes_count();
@@ -185,18 +185,12 @@ int main (int argc, char **argv) {
         float percent = 100.0 - 100.0 * remaining_steps / total_steps;
         if (d_n(d_base) > 100) {
             d_reset(d_base);
-            d_reset(d_step);
         }
 
         long eta = 0;
         d_this = d_since(&t_this);
         d_add(d_base, d_this);
-        d_add(d_step, (d_this - d_prev) / d_avg(d_base));
-        eta = (long) (
-            d_avg(d_base) * remaining_steps *
-            (1.0 + d_avg(d_step) * remaining_steps / 2)
-            );
-        d_prev = d_this;
+        eta = (long) (d_avg(d_base) * remaining_steps);
         
         printf(" [");
         fprintt(stdout, time(NULL) - start);
