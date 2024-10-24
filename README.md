@@ -1,3 +1,9 @@
+# TODO
+
+- repair r
+
+- repair p
+
 # Prime Factor Decomposition
 
 ## Theory
