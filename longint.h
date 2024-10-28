@@ -22,7 +22,7 @@ void d_add(void *arg, float value);
 float d_avg(void *arg);
 int d_n(void *arg);
 void d_reset(void *arg);
-int d_rel(void *arg);
+time_t d_span(void *arg);
 void d_end(void *arg);
 
 #endif

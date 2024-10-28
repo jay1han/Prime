@@ -106,6 +106,7 @@ float d_since(struct timeval *since) {
 typedef struct {
     int n, rel;
     float avg;
+    time_t time, span;
 } d_t;
 
 void *d_new() {
@@ -113,6 +114,8 @@ void *d_new() {
     d->n = 0;
     d->avg = 0;
     d->rel = 0;
+    d->time = time(NULL);
+    d->span = 0;
     return (void*)d;
 }
 
@@ -120,6 +123,9 @@ void d_add(void *arg, float value) {
     d_t *d = (d_t*)arg;
     d->avg = ((d->avg * d->n) + value) / (d->n + 1);
     d->n++;
+    time_t now = time(NULL);
+    d->span = now - d->time;
+    d->time = now;
 }
 
 float d_avg(void *arg) {
@@ -132,9 +138,9 @@ int d_n(void *arg) {
     return d->n;
 }
 
-int d_rel(void *arg) {
+time_t d_span(void *arg) {
     d_t *d = (d_t*)arg;
-    return d->rel;
+    return d->span;
 }
 
 void d_end(void *arg) {

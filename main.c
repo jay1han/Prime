@@ -196,7 +196,7 @@ int main (int argc, char **argv) {
         fprintt(stdout, time(NULL) - start);
         printf("]%5.1f%%", percent);
         fprintlf(stdout, " .. %  :  %  primes. ETA", first, latest);
-        printf("(%d) ", d_rel(d_base));
+        printf("(%d,%lds) ", d_n(d_base), d_span(d_base));
         fprintt(stdout, eta);
         printf("          \r");
         fflush(stdout);
