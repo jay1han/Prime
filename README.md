@@ -1,8 +1,14 @@
 # TODO
 
-- repair r
+Single executable with persistent files.
 
-- repair p
+## config.ini
+
+- primes list file name
+
+- decomposition list file name
+
+- number of threads
 
 # Prime Factor Decomposition
 
@@ -31,16 +37,6 @@ e.g. `1_000_000_000` represents one billion (10<sup>9</sup>).
 
 - In some cases, we can use the suffix `m` and `g` to denote a million or a billion,
 e.g. `100m` is `100_000_000`.
-
-## Programs
-
-### `primes`
-
-### `print`
-
-### `merge`
-
-### `repair`
 
 ## File formats
 
@@ -99,16 +95,6 @@ In this file, each number is represented by exactly Z bytes, so that a program c
 
 The "reduced" variant, names `Numbers.X-Y.red`, contains only the *degree* of each integer (the sum of exponents),
 in one byte per number.
-
-## Code
-
-### `prime.c`
-
-### `number.c`
-
-### `flexint.c`
-
-### `worker.c`
 
 # Applications
 
@@ -190,3 +176,11 @@ Also, R<sup>k</sup><sub>p</sub>(*n*) is meaningless for *k* > *q*,
 because d<sup>k</sup><sub>p</sub>(*m*) does not exist for those values of *k*.
 
 In fact, for *n* &isin; &Nopf;, R<sup>k</sup><sub>p</sub>(*p.n*) = d<sub>p</sub>(*n*) . &Pi;<sub>k</sub>
+
+## Theorems and Conjectures
+
+- [Prime number theorem](https://en.wikipedia.org/wiki/Prime_number_theorem)
+
+- [Prime gap conjectures](https://en.wikipedia.org/wiki/Prime_gap)
+
+- [Goldbach conjecture](https://en.wikipedia.org/wiki/Goldbach%27s_conjecture)
